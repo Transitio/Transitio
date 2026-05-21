@@ -1,0 +1,44 @@
+CUSTOM SOFTWARE LICENSE AGREEMENT
+
+Copyright (c) 2026 Transitio (https://github.com/Transitio)
+
+All rights reserved.
+
+1. License Grant
+
+Permission is granted to any individual or organization to use this software 
+for personal or commercial purposes, including within applications and services, 
+subject to the restrictions below.
+
+2. Restrictions
+
+You may NOT:
+
+- Modify, adapt, alter, or create derivative works of the software
+- Reverse engineer, decompile, or disassemble the software, except where permitted by law
+- Redistribute, sublicense, lease, or sell the software as a standalone product
+- Repackage or rebrand the software under a different name
+
+3. Distribution via Dependency
+
+You may distribute applications that include this software as a dependency, 
+provided that the software remains in its original, unmodified form and is not 
+extracted or distributed separately.
+
+4. Ownership
+
+This software is licensed, not sold. All rights, title, and interest remain 
+with the copyright owner.
+
+5. Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, 
+AND NON-INFRINGEMENT.
+
+6. Limitation of Liability
+
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, 
+ARISING FROM OR RELATED TO THE USE OF THE SOFTWARE.
+
+By using this software, you agree to the terms of this license.

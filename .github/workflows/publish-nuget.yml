@@ -1,0 +1,74 @@
+name: Publish NuGet Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-pack-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ✅ Checkout code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ✅ Setup .NET 8
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # ✅ Setup .NET 10
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # ✅ Restore dependencies
+      - name: Restore
+        run: dotnet restore
+
+      # ✅ Build
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      # ✅ Pack all projects
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build -o ./nupkgs
+
+      # ✅ Publish Mapper FIRST
+      - name: Publish Mapper
+        run: |
+          dotnet nuget push ./nupkgs/Transitio.Mapper*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      # ✅ Publish Dependency AFTER (with delay)
+      - name: Publish Dependency
+        run: |
+          sleep 30
+          dotnet nuget push ./nupkgs/Transitio.Dependency*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      # ✅ Create GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Transitio ${{ github.ref_name }}
+          body: |
+            🚀 Release ${{ github.ref_name }}
+
+            - NuGet packages published
+            - Includes Transitio.Mapper and Transitio.Dependency
+            - Improvements and fixes
+
+          files: |
+            ./nupkgs/*.nupkg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

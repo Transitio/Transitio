@@ -31,3 +31,8 @@ dotnet add package Transitio.Dependency
 Maintained by the **Transitio Team**
 
 - GitHub: https://github.com/Transitio/Transitio
+
+## 📄 License
+
+This software is provided under a custom proprietary license.
+Commercial licensing options may be available in the future.
