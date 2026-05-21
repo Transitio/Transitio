@@ -40,7 +40,12 @@ jobs:
 
       # ✅ Pack all projects
       - name: Pack
-        run: dotnet pack --configuration Release --no-build -o ./nupkgs
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          dotnet pack --configuration Release --no-build \
+            -p:PackageVersion=$VERSION \
+            -p:Version=$VERSION \
+            -o ./nupkgs
 
       # ✅ Publish Mapper FIRST
       - name: Publish Mapper

@@ -4,8 +4,7 @@
     <!-- ✅ Multi-target -->
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
 
-    <PackageId>Transitio.Mapper</PackageId>
-    <Version>1.0.0</Version>
+    <PackageId>Transitio.Mapper</PackageId>    
     <Authors>Transitio Team</Authors>
 
     <Description>Lightweight high-performance object mapping framework</Description>
