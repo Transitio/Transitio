@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "gzrpJmRpB08=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\hiteshku\\repos\\Transitio\\src\\Transitio.Mapper\\Transitio.Mapper.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\hiteshku\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.27\\microsoft.netcore.app.ref.8.0.27.nupkg.sha512",
+    "C:\\Users\\hiteshku\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.27\\microsoft.windowsdesktop.app.ref.8.0.27.nupkg.sha512",
+    "C:\\Users\\hiteshku\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.27\\microsoft.aspnetcore.app.ref.8.0.27.nupkg.sha512"
+  ],
+  "logs": []
+}

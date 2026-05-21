@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+
+    <PackageId>Transitio.Dependency</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Transitio Team</Authors>
+    <RepositoryUrl>https://github.com/Transitio/Transitio</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/Transitio/Transitio</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Dependency wrapper for Transitio</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Transitio.Mapper\Transitio.Mapper.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+  <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+</ItemGroup>
+</Project>
