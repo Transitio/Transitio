@@ -1,0 +1,22 @@
+# ===== Build Output =====
+bin/
+obj/
+
+# ===== NuGet Packages =====
+*.nupkg
+*.snupkg
+*.symbols.nupkg
+nupkgs/
+
+# ===== Visual Studio =====
+.vs/
+*.user
+*.suo
+
+# ===== Logs =====
+*.log
+
+# ===== OS Files =====
+.DS_Store
+Thumbs.db
+``

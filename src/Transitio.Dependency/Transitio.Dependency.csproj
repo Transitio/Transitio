@@ -11,6 +11,7 @@
     <PackageProjectUrl>https://github.com/Transitio/Transitio</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Dependency wrapper for Transitio</Description>
+    <PackageOutputPath>./nupkgs</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

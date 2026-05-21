@@ -1,5 +1,8 @@
 # 🚀 Transitio
 
+[![NuGet](https://img.shields.io/nuget/v/Transitio.Mapper)](https://www.nuget.org/packages/Transitio.Mapper)
+[![NuGet](https://img.shields.io/nuget/v/Transitio.Dependency)](https://www.nuget.org/packages/Transitio.Dependency)
+
 **Transitio** is a lightweight, high-performance object mapping framework for .NET with support for profiles, nested mapping, and dependency injection.
 
 ---
@@ -9,7 +12,7 @@
 - ⚡ Expression-based high-performance mapping
 - 🧩 Profiles for modular configuration
 - 🔗 Nested object mapping
-- 📦 Collection mapping
+- 📦 Collection mapping (List → List)
 - 🔧 Custom mapping support
 - ✅ Mapping validation
 - 💉 Dependency injection integration
