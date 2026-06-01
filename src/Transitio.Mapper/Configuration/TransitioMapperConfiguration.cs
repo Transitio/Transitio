@@ -7,16 +7,19 @@ namespace Transitio.Mapper;
 public class TransitioMapperConfiguration
 {
     private readonly List<IMappingDefinition> _mappings = new();
+    private readonly Dictionary<(Type, Type), TypeMap> _typeMaps = new(); // ✅ NEW: TypeMaps   
+    private readonly bool _ignoreNullValues;
 
     public TransitioMapperConfiguration(Action<TransitioConfigBuilder> config)
     {
-        var builder = new TransitioConfigBuilder(_mappings);
+        var builder = new TransitioConfigBuilder(_mappings, _typeMaps);
         config(builder);
+        _ignoreNullValues = builder.IgnoreNullValues;
     }
 
     public IMapper BuildMapper()
     {
-        return new TransitioMapper(_mappings);
+        return new TransitioMapper(_mappings, _typeMaps, _ignoreNullValues);
     }
 
     public void AssertConfigurationIsValid()

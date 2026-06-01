@@ -4,6 +4,6 @@ public class UserProfile : MappingProfile
 {
     public override void Configure(TransitioConfigBuilder cfg)
     {
-        cfg.CreateMap<User, UserDto>();
+        cfg.CreateMap<User, UserDto>().ReverseMap();
     }
 }
