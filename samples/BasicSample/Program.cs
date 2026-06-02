@@ -1,92 +1,265 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Transitio.Dependency;
+using Transitio.Mapper;
 
 var services = new ServiceCollection();
 
-// Register Transitio and add sample mappings
+// --------------------------------------------
+// ✅ Configure Transitio
+// --------------------------------------------
 services.AddTransitio(cfg =>
 {
+    // Profiles
     cfg.AddProfile<UserProfile>();
     cfg.AddProfile<OrderProfile>();
+
+    // ConvertUsing examples
+    cfg.AddProfile<TypeConverterProfile>();
+    cfg.AddProfile<InstanceConverterProfile>();
+    cfg.AddProfile<DelegateConverterProfile>();
+
+    // IncludeBase examples
+    cfg.AddProfile<IncludeBasicProfile>();
+    cfg.AddProfile<IncludeOverrideProfile>();
+    cfg.AddProfile<IncludeMultiLevelProfile>();
+
+
+    // Global settings
     cfg.SetIgnoreNullValues(true);
 
-    // Custom member mapping with ForMember / MapFrom
+    // Custom mappings
     cfg.CreateMap<User, UserViewDto>()
        .ForMember(dest => dest.DisplayName, opt => opt.MapFrom(src => src.Name.ToUpper()))
        .ForMember(dest => dest.Age, opt => opt.Condition(src => src.Age >= 18));
 
-    // Ignore a destination property
     cfg.CreateMap<User, UserIgnoreDto>()
        .ForMember(dest => dest.Age, opt => opt.Ignore());
 
-    // Demonstrate IgnoreNullValues with default destination initializers
     cfg.CreateMap<UserWithNullableName, UserWithDefaultNameDto>();
 });
 
+// --------------------------------------------
+// ✅ Build Provider & Resolve Mapper
+// --------------------------------------------
 var provider = services.BuildServiceProvider();
-var dep = provider.GetRequiredService<TransitioDependency>();
+var mapper = provider.GetRequiredService<TransitioDependency>().Mapping.Mapper;
 
-var orders = new List<Order>
+// --------------------------------------------
+// ✅ Run Demos
+// --------------------------------------------
+RunOrderCollectionDemo(mapper);
+RunUserMappingDemo(mapper);
+RunReverseMappingDemo(mapper);
+RunIgnoreNullDemo(mapper);
+//Converters
+RunTypeConverterDemo(mapper);
+RunInstanceConverterDemo(mapper);
+RunDelegateConverterDemo(mapper);
+// IncludeBase
+RunBasicInclude(mapper);
+RunOverrideInclude(mapper);
+RunMultiLevelInclude(mapper);
+
+
+
+// ============================================
+// ✅ Demo Methods
+// ============================================
+
+static void RunOrderCollectionDemo(IMapper mapper)
 {
-    new Order
+    var orders = new List<Order>
     {
-        Id = "ORD-1",
-        Customer = new User { Name = "Hitesh", Age = 30 }
-    },
-    new Order
+        new Order
+        {
+            Id = "ORD-1",
+            Customer = new User { Name = "Hitesh", Age = 30 }
+        },
+        new Order
+        {
+            Id = "ORD-2",
+            Customer = new User { Name = "John", Age = 17 }
+        }
+    };
+
+    Console.WriteLine("=== Order Collection Mapping ===");
+
+    // List
+    var orderDtos = mapper.Map<List<OrderDto>>(orders);
+    Console.WriteLine("Order -> List<OrderDto>:");
+    foreach (var dto in orderDtos)
     {
-        Id = "ORD-2",
-        Customer = new User { Name = "John", Age = 17 }
+        Console.WriteLine($"- {dto.Id}: {dto.Customer.Name} ({dto.Customer.Age})");
     }
-};
 
-Console.WriteLine("Order -> OrderDto:");
-var orderDtos = dep.Mapping.Mapper.Map<List<OrderDto>>(orders);
-foreach (var dto in orderDtos)
-{
-    Console.WriteLine($"- {dto.Id}: {dto.Customer.Name} ({dto.Customer.Age})");
+    Console.WriteLine();
+
+    // Array
+    var array = mapper.Map<OrderDto[]>(orders);
+    Console.WriteLine("Order -> OrderDto[]:");
+    Console.WriteLine($"- Length: {array.Length}");
+    Console.WriteLine($"- First: {array[0].Id} -> {array[0].Customer.Name}");
+
+    Console.WriteLine();
+
+    // Interface
+    var list = mapper.Map<IList<OrderDto>>(orders);
+    Console.WriteLine("Order -> IList<OrderDto>:");
+    Console.WriteLine($"- Count: {list.Count}");
+    Console.WriteLine($"- Second: {list[1].Id} -> {list[1].Customer.Name}");
+
+    Console.WriteLine();
 }
 
-Console.WriteLine();
+static void RunUserMappingDemo(IMapper mapper)
+{
+    Console.WriteLine("=== User Mapping (ForMember + Condition) ===");
 
-Console.WriteLine("Order -> OrderDto[] (Array destination):");
-var orderDtoArray = dep.Mapping.Mapper.Map<OrderDto[]>(orders);
-Console.WriteLine($"- Array length: {orderDtoArray.Length}");
-Console.WriteLine($"- First order: {orderDtoArray[0].Id} -> {orderDtoArray[0].Customer.Name}");
+    var user = new User { Name = "Hitesh", Age = 16 };
+    var result = mapper.Map<UserViewDto>(user);
 
-Console.WriteLine();
+    Console.WriteLine($"- DisplayName: {result.DisplayName}");
+    Console.WriteLine($"- Age: {result.Age}");
+    Console.WriteLine();
 
-Console.WriteLine("Order -> IList<OrderDto> (Interface destination):");
-var orderDtoList = dep.Mapping.Mapper.Map<IList<OrderDto>>(orders);
-Console.WriteLine($"- Count: {orderDtoList.Count}");
-Console.WriteLine($"- Second order: {orderDtoList[1].Id} -> {orderDtoList[1].Customer.Name}");
+    Console.WriteLine("=== User Mapping (Ignore) ===");
 
-Console.WriteLine();
+    var ignoreResult = mapper.Map<UserIgnoreDto>(
+        new User { Name = "Alice", Age = 30 });
 
-var user = new User { Name = "Hitesh", Age = 16 };
-var userView = dep.Mapping.Mapper.Map<UserViewDto>(user);
-Console.WriteLine("User -> UserViewDto (ForMember + Condition):");
-Console.WriteLine($"- DisplayName: {userView.DisplayName}");
-Console.WriteLine($"- Age: {userView.Age}");
+    Console.WriteLine($"- Name: {ignoreResult.Name}");
+    Console.WriteLine($"- Age: {ignoreResult.Age}");
+    Console.WriteLine();
+}
 
-Console.WriteLine();
+static void RunReverseMappingDemo(IMapper mapper)
+{
+    Console.WriteLine("=== Reverse Mapping ===");
 
-var userIgnore = dep.Mapping.Mapper.Map<UserIgnoreDto>(new User { Name = "Alice", Age = 30 });
-Console.WriteLine("User -> UserIgnoreDto (Ignore Age):");
-Console.WriteLine($"- Name: {userIgnore.Name}");
-Console.WriteLine($"- Age: {userIgnore.Age}");
+    var dto = new UserDto { Name = "Jane", Age = 22 };
+    var user = mapper.Map<User>(dto);
 
-Console.WriteLine();
+    Console.WriteLine($"- Name: {user.Name}");
+    Console.WriteLine($"- Age: {user.Age}");
+    Console.WriteLine();
+}
 
-var reverseUserDto = new UserDto { Name = "Jane", Age = 22 };
-var reverseUser = dep.Mapping.Mapper.Map<User>(reverseUserDto);
-Console.WriteLine("UserDto -> User (ReverseMap):");
-Console.WriteLine($"- Name: {reverseUser.Name}");
-Console.WriteLine($"- Age: {reverseUser.Age}");
+static void RunIgnoreNullDemo(IMapper mapper)
+{
+    Console.WriteLine("=== IgnoreNullValues Demo ===");
 
-Console.WriteLine();
+    var source = new UserWithNullableName { Name = null };
+    var result = mapper.Map<UserWithDefaultNameDto>(source);
 
-var nullableUser = new UserWithNullableName { Name = null };
-var defaultNameDto = dep.Mapping.Mapper.Map<UserWithDefaultNameDto>(nullableUser);
-Console.WriteLine("UserWithNullableName -> UserWithDefaultNameDto (IgnoreNullValues):");
-Console.WriteLine($"- Name: {defaultNameDto.Name}");
+    Console.WriteLine($"- Name: {result.Name}");
+    Console.WriteLine();
+}
+
+
+static void RunTypeConverterDemo(IMapper mapper)
+{
+    Console.WriteLine("=== Type Converter ===");
+
+    var input = new OrderInput
+    {
+        Amount = 1000,
+        Currency = "INR",
+        Country = "IN"
+    };
+
+    var result = mapper.Map<OrderDomain_Type>(input);
+
+    Console.WriteLine($"Final Amount: {result.FinalAmount}");
+    Console.WriteLine($"Region: {result.Region}");
+    Console.WriteLine();
+}
+
+static void RunInstanceConverterDemo(IMapper mapper)
+{
+    Console.WriteLine("=== Instance Converter ===");
+
+    var input = new OrderInput
+    {
+        Amount = 1000,
+        Currency = "INR",
+        Country = "IN"
+    };
+
+    var result = mapper.Map<OrderDomain_Instance>(input);
+
+    Console.WriteLine($"Final Amount: {result.FinalAmount}");
+    Console.WriteLine($"Region: {result.Region}");
+    Console.WriteLine();
+}
+
+static void RunDelegateConverterDemo(IMapper mapper)
+{
+    Console.WriteLine("=== Delegate Converter ===");
+
+    var input = new OrderInput
+    {
+        Amount = 1000,
+        Currency = "INR",
+        Country = "IN"
+    };
+
+    var result = mapper.Map<OrderDomain_Delegate>(input);
+
+    Console.WriteLine($"Final Amount: {result.FinalAmount}");
+    Console.WriteLine($"Region: {result.Region}");
+    Console.WriteLine();
+}
+
+
+static void RunBasicInclude(IMapper mapper)
+{
+    Console.WriteLine("=== Include: Basic ===");
+
+    var employee = new Employee
+    {
+        Name = "Hitesh",
+        Department = "IT"
+    };
+
+    var dto = mapper.Map<EmployeeDto>(employee);
+
+    Console.WriteLine($"Name: {dto.Name}");
+    Console.WriteLine($"Department: {dto.Department}");
+    Console.WriteLine();
+}
+
+static void RunOverrideInclude(IMapper mapper)
+{
+    Console.WriteLine("=== Include: Override ===");
+
+    var employee = new Employee
+    {
+        Name = "Hitesh",
+        Department = "Engineering"
+    };
+
+    var dto = mapper.Map<EmployeeDto>(employee);
+
+    Console.WriteLine($"Name: {dto.Name}"); // Should be overridden
+    Console.WriteLine($"Department: {dto.Department}");
+    Console.WriteLine();
+}
+
+static void RunMultiLevelInclude(IMapper mapper)
+{
+    Console.WriteLine("=== Include: Multi-Level ===");
+
+    var manager = new Manager
+    {
+        Name = "Hitesh",
+        Department = "Architecture",
+        TeamSize = 10
+    };
+
+    var dto = mapper.Map<ManagerDto>(manager);
+
+    Console.WriteLine($"Name: {dto.Name}");
+    Console.WriteLine($"Department: {dto.Department}");
+    Console.WriteLine($"TeamSize: {dto.TeamSize}");
+    Console.WriteLine();
+}

@@ -18,11 +18,11 @@
     <IncludeSymbols>true</IncludeSymbols>
     <PackageOutputPath>./nupkgs</PackageOutputPath>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageLogo>logo.png</PackageLogo>
   </PropertyGroup>
   <ItemGroup>
   <None Include="..\..\README.md" Pack="true" PackagePath="\" />
-   <None Include="..\..\LICENSE.txt" Pack="true" PackagePath="\" />
+  <None Include="..\..\LICENSE.txt" Pack="true" PackagePath="\" />
+  <None Include="..\..\logo.png" Pack="true" PackagePath="\" />
 </ItemGroup>
-
-
 </Project>

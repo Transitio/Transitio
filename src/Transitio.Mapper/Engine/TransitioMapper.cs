@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -64,8 +65,18 @@ public class TransitioMapper : IMapper
 
         return src =>
         {
+            // ✅ Create context with mapper reference for recursive mapping
+            var context = new MappingContext { Mapper = this };
+
+            // ✅ Check if converter is configured - execute it instead of property mapping
+            if (typeMap != null && TryExecuteConverter(src, sourceType, destType, typeMap, context, out var convertedResult))
+            {
+                context.ObjectCache[src] = convertedResult!;
+                return convertedResult!;
+            }
+
             // ✅ fallback result from existing mapping
-            var result = mapping.Map(src, new MappingContext());
+            var result = mapping.Map(src, context);
 
             if (_ignoreNullValues)
             {
@@ -75,16 +86,75 @@ public class TransitioMapper : IMapper
             // ✅ apply advanced rules (ONLY if TypeMap exists)
             if (typeMap != null)
             {
-                ApplyPropertyMaps(src, result, typeMap);
+                ApplyPropertyMaps(src, result, typeMap, context);
             }
 
             return result;
         };
     }
 
-    // ✅ NEW: Apply ForMember / Ignore / Condition
-    private void ApplyPropertyMaps(object source, object destination, TypeMap typeMap)
+    // ✅ NEW: Try to execute a configured type converter
+    private bool TryExecuteConverter(object source, Type sourceType, Type destType, TypeMap typeMap, MappingContext context, out object? result)
     {
+        result = null;
+
+        // ✅ Instance-based converter
+        if (typeMap.ConverterInstance != null)
+        {
+            var converterType = typeMap.ConverterInstance.GetType();
+            var convertMethod = converterType.GetMethod("Convert", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            
+            if (convertMethod != null)
+            {
+                result = convertMethod.Invoke(typeMap.ConverterInstance, new[] { source, context });
+                return true;
+            }
+        }
+
+        // ✅ Type-based converter (auto-instantiate)
+        if (typeMap.ConverterType != null)
+        {
+            var converterInstance = Activator.CreateInstance(typeMap.ConverterType);
+            var convertMethod = typeMap.ConverterType.GetMethod("Convert", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            
+            if (convertMethod != null)
+            {
+                result = convertMethod.Invoke(converterInstance, new[] { source, context });
+                return true;
+            }
+        }
+
+        // ✅ Delegate-based converter
+        if (typeMap.ConverterDelegate != null)
+        {
+            try
+            {
+                result = typeMap.ConverterDelegate.DynamicInvoke(source, context);
+                return true;
+            }
+            catch
+            {
+                // If delegate invocation fails, fall back to normal mapping
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    // ✅ NEW: Apply ForMember / Ignore / Condition (with Include support)
+    private void ApplyPropertyMaps(object source, object destination, TypeMap typeMap, MappingContext context)
+    {
+        // ✅ First apply included type mappings (base type mappings)
+        foreach (var (baseSourceType, baseDestType) in typeMap.IncludedMaps)
+        {
+            if (_typeMaps.TryGetValue((baseSourceType, baseDestType), out var baseTypeMap))
+            {
+                ApplyPropertyMaps(source, destination, baseTypeMap, context);
+            }
+        }
+
+        // ✅ Then apply derived type mappings (can override base mappings)
         var destType = destination.GetType();
 
         foreach (var prop in destType.GetProperties())
@@ -109,8 +179,14 @@ public class TransitioMapper : IMapper
                 continue;
             }
 
-            // ✅ Custom Mapping
-            if (map.CustomMapping != null)
+            // ✅ Custom Mapping (with context support)
+            if (map.CustomMappingWithContext != null)
+            {
+                var value = map.CustomMappingWithContext(source, context);
+                prop.SetValue(destination, value);
+            }
+            // ✅ Custom Mapping (simple, backward compatible)
+            else if (map.CustomMapping != null)
             {
                 var value = map.CustomMapping(source);
                 prop.SetValue(destination, value);
@@ -208,7 +284,7 @@ public class TransitioMapper : IMapper
         throw new InvalidOperationException($"Destination collection type '{destType.Name}' is not supported");
     }
 
-    private static System.Type GetCollectionItemType(System.Type type)
+    private static System.Type? GetCollectionItemType(System.Type type)
     {
         if (type.IsArray)
             return type.GetElementType();

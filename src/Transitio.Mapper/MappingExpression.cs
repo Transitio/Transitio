@@ -35,6 +35,106 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
         return this;
     }
 
+    /// <summary>
+    /// Specifies a type converter to handle the entire type transformation.
+    /// The converter type will be instantiated when mapping occurs.
+    /// </summary>
+    /// <typeparam name="TConverter">The converter type implementing ITypeConverter&lt;TSource, TDestination&gt;</typeparam>
+    public MappingExpression<TSource, TDestination> ConvertUsing<TConverter>()
+        where TConverter : ITypeConverter<TSource, TDestination>
+    {
+        _typeMap.ConverterType = typeof(TConverter);
+        _typeMap.ConverterInstance = null;
+        _typeMap.ConverterDelegate = null;
+        return this;
+    }
+
+    /// <summary>
+    /// Specifies a pre-instantiated type converter to handle the entire type transformation.
+    /// </summary>
+    /// <param name="converter">The converter instance to use</param>
+    public MappingExpression<TSource, TDestination> ConvertUsing(ITypeConverter<TSource, TDestination> converter)
+    {
+        _typeMap.ConverterInstance = converter;
+        _typeMap.ConverterType = null;
+        _typeMap.ConverterDelegate = null;
+        return this;
+    }
+
+    /// <summary>
+    /// Specifies a custom delegate converter to handle the entire type transformation.
+    /// The delegate receives the source and mapping context for full control.
+    /// </summary>
+    /// <param name="converter">The converter delegate</param>
+    public MappingExpression<TSource, TDestination> ConvertUsing(Func<TSource, IMappingContext, TDestination> converter)
+    {
+        _typeMap.ConverterDelegate = converter;
+        _typeMap.ConverterInstance = null;
+        _typeMap.ConverterType = null;
+        return this;
+    }
+
+    /// <summary>
+    /// Includes mappings from a base/parent type, applying them before derived type mappings.
+    /// The derived type mappings can override base mappings through ForMember configurations.
+    /// </summary>
+    /// <typeparam name="TBaseSource">The base source type</typeparam>
+    /// <typeparam name="TBaseDestination">The base destination type</typeparam>
+    public MappingExpression<TSource, TDestination> Include<TBaseSource, TBaseDestination>()
+    {
+        // Validate that base types are actually base types of source/destination
+        if (!typeof(TBaseSource).IsAssignableFrom(typeof(TSource)))
+        {
+            throw new InvalidOperationException(
+                $"Cannot include mapping {typeof(TBaseSource).Name} -> {typeof(TBaseDestination).Name}: " +
+                $"{typeof(TBaseSource).Name} is not a base type of {typeof(TSource).Name}");
+        }
+
+        var includedKey = (typeof(TBaseSource), typeof(TBaseDestination));
+
+        // Check for circular includes
+        if (WouldCreateCircularInclude(includedKey, new HashSet<(Type, Type)>()))
+        {
+            throw new InvalidOperationException(
+                $"Circular include detected: {typeof(TSource).Name} -> {typeof(TDestination).Name} " +
+                $"includes {typeof(TBaseSource).Name} -> {typeof(TBaseDestination).Name}");
+        }
+
+        _typeMap.IncludedMaps.Add(includedKey);
+        return this;
+    }
+
+    /// <summary>
+    /// Includes mappings from a base type. Alias for Include for explicit base class mapping.
+    /// </summary>
+    /// <typeparam name="TBaseSource">The base source type</typeparam>
+    /// <typeparam name="TBaseDestination">The base destination type</typeparam>
+    public MappingExpression<TSource, TDestination> IncludeBase<TBaseSource, TBaseDestination>()
+    {
+        return Include<TBaseSource, TBaseDestination>();
+    }
+
+    private bool WouldCreateCircularInclude(
+        (Type, Type) includedKey,
+        HashSet<(Type, Type)> visited)
+    {
+        if (visited.Contains(includedKey))
+            return true;
+
+        visited.Add(includedKey);
+
+        if (_typeMaps.TryGetValue(includedKey, out var includedTypeMap))
+        {
+            foreach (var nestedInclude in includedTypeMap.IncludedMaps)
+            {
+                if (WouldCreateCircularInclude(nestedInclude, new HashSet<(Type, Type)>(visited)))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
     // ✅ Single correct implementation
     public bool CanHandle(System.Type sourceType, System.Type destinationType)
     {
