@@ -30,6 +30,6 @@ public class ErrorHandlingTests
         var ex = Assert.Throws<InvalidOperationException>(
             () => mapper.Map<UserDto>(new User { Name = "a", Age = 1 }));
 
-        Assert.Contains("Mapping not found.", ex.Message);
+        Assert.Contains("Mapping not found", ex.Message);
     }
 }

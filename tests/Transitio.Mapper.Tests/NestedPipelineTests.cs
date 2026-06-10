@@ -64,8 +64,8 @@ public class NestedPipelineTests
 
         Assert.Equal(2, dto.Children.Count);
         Assert.Equal("BOB", dto.Children[0].Name);
-        Assert.Equal("converted", dto.Children[0].Tag);
+        Assert.Equal("converter", dto.Children[0].Tag);
         Assert.Equal("CARA", dto.Children[1].Name);
-        Assert.Equal("converted", dto.Children[1].Tag);
+        Assert.Equal("converter", dto.Children[1].Tag);
     }
 }

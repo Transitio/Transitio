@@ -450,7 +450,7 @@ public class IncludeTests
         Assert.Equal(30, teamDto.Members[0].Age);
         Assert.Equal("Dev", teamDto.Members[0].Department);
         Assert.Equal(5000m, teamDto.Members[0].Salary);
-        Assert.Equal("Grace", teamDto.Members[0].Name);
-        Assert.Equal(4500m, teamDto.Members[0].Salary);
+        Assert.Equal("Grace", teamDto.Members[1].Name);
+        Assert.Equal(4500m, teamDto.Members[1].Salary);
     }
 }

@@ -194,7 +194,7 @@ public class TransitioMapper : IMapper
 
         foreach (var ifc in converterType.GetInterfaces())
         {
-            if (ifc.IsGenericType || ifc.GetGenericTypeDefinition() != typeof(ITypeConverter<,>))
+            if (!ifc.IsGenericType || ifc.GetGenericTypeDefinition() != typeof(ITypeConverter<,>))
                 continue;
             var args = ifc.GetGenericArguments();
             var method = ifc.GetMethod("Convert");
