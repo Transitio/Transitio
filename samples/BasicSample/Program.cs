@@ -4,6 +4,9 @@ using Transitio.Mapper;
 
 var services = new ServiceCollection();
 
+//Service consumed by a DI-resolved type converter (see DiConverterProfile)
+services.AddSingleton<PricingService>();
+
 // --------------------------------------------
 // ✅ Configure Transitio
 // --------------------------------------------
@@ -17,6 +20,7 @@ services.AddTransitio(cfg =>
     cfg.AddProfile<TypeConverterProfile>();
     cfg.AddProfile<InstanceConverterProfile>();
     cfg.AddProfile<DelegateConverterProfile>();
+    cfg.AddProfile<DiConverterProfile>();
 
     // IncludeBase examples
     cfg.AddProfile<IncludeBasicProfile>();
@@ -36,6 +40,10 @@ services.AddTransitio(cfg =>
        .ForMember(dest => dest.Age, opt => opt.Ignore());
 
     cfg.CreateMap<UserWithNullableName, UserWithDefaultNameDto>();
+
+    //Nested collection: Cart.Orders <List<Order>> auto maps to <List<OrderDto>>
+    //and each Order's nested Customer is mapped too.
+    cfg.CreateMap<Cart, CartDto>();
 });
 
 // --------------------------------------------
@@ -59,6 +67,9 @@ RunDelegateConverterDemo(mapper);
 RunBasicInclude(mapper);
 RunOverrideInclude(mapper);
 RunMultiLevelInclude(mapper);
+//Nested collection + DI converter
+RunNestedCollectionDemo(mapper);
+RunDiConverterDemo(mapper);
 
 
 
@@ -261,5 +272,52 @@ static void RunMultiLevelInclude(IMapper mapper)
     Console.WriteLine($"Name: {dto.Name}");
     Console.WriteLine($"Department: {dto.Department}");
     Console.WriteLine($"TeamSize: {dto.TeamSize}");
+    Console.WriteLine();
+}
+
+static void RunNestedCollectionDemo(IMapper mapper)
+{
+    Console.WriteLine("=== Nested Collection (Cart -> CartDto) ===");
+    var cart = new Cart
+    {
+        Id = "CART-1",
+        Orders = new List<Order>
+        {
+            new Order
+            {
+                Id = "ORD-1",
+                Customer = new User { Name = "Hitesh", Age = 30 }
+            },
+            new Order
+            {
+                Id = "ORD-2",
+                Customer = new User { Name = "John", Age = 22 }
+            }
+        }
+    };
+
+    var dto = mapper.Map<CartDto>(cart);
+
+    Console.WriteLine($"Cart: {dto.Id} ({dto.Orders.Count} orders)");
+    foreach (var o in dto.Orders)
+    {
+        Console.WriteLine($"- {o.Id}: {o.Customer.Name} ({o.Customer.Age})");
+    }
+    Console.WriteLine();
+}
+static void RunDiConverterDemo(IMapper mapper)
+{
+    Console.WriteLine("=== DI-Resolved Type Converter ===");
+    var input = new OrderInput
+    {
+        Amount = 1000,
+        Currency = "USD",
+        Country = "US"
+    };
+    // DiPricingConverter has a constructor dependency (Pricing Service) resolved by the container.
+    var result = mapper.Map<OrderDomain_DI>(input);
+
+    Console.WriteLine($"Final Amount: {result.FinalAmount}");
+    Console.WriteLine($"Region: {result.Region}");
     Console.WriteLine();
 }

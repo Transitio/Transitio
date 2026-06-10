@@ -8,3 +8,4 @@ public class OrderDomain
 public class OrderDomain_Type : OrderDomain {}
 public class OrderDomain_Instance : OrderDomain {}
 public class OrderDomain_Delegate : OrderDomain {}
+public class OrderDomain_DI : OrderDomain {}

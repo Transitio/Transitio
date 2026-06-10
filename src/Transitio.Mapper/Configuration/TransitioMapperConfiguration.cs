@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +20,16 @@ public class TransitioMapperConfiguration
 
     public IMapper BuildMapper()
     {
-        return new TransitioMapper(_mappings, _typeMaps, _ignoreNullValues);
+        return BuildMapper(null);
+    }
+
+    /// <summary>
+    /// Builds the mapper, optionally supplying a factory used to instantiate type-based 
+    /// converters. (e.g. backed by a DI container so converters can have constructor dependencies).
+    /// </summary>  
+    public IMapper BuildMapper(Func<Type, object>? converterFactory)
+    {
+        return new TransitioMapper(_mappings, _typeMaps, _ignoreNullValues, converterFactory);
     }
 
     public void AssertConfigurationIsValid()
@@ -50,11 +60,29 @@ public class TransitioMapperConfiguration
         var sourceType = genericArgs[0];
         var destType = genericArgs[1];
 
+        // A full type converter (ConvertUsing) replaces property-by-property mapping,
+        // so the source/destination property shapes don't need to line up.
+        _typeMaps.TryGetValue((sourceType, destType), out var typeMap);
+        if (typeMap != null &&
+        (typeMap.ConverterInstance != null || typeMap.ConverterType != null || typeMap.ConverterDelegate != null))
+        {
+            return;
+        }
+
         var sourceProps = sourceType.GetProperties();
         var destProps = destType.GetProperties();
 
         foreach (var destProp in destProps)
         {
+            // Skip properties explicitly handled via ForMember (MapFrom) or Ignore -
+            // these don't require a matching source property.
+            if (typeMap != null &&
+               typeMap.PropertyMaps.TryGetValue(destProp.Name, out var propertyMap) &&
+               (propertyMap.Ignore || propertyMap.CustomMapping != null || propertyMap.CustomMappingWithContext != null))
+            {
+                continue;
+            }
+
             var sourceProp = sourceProps.FirstOrDefault(p => p.Name == destProp.Name);
 
             // ✅ Missing source property

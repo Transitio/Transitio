@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -16,7 +17,10 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
     private readonly Dictionary<(Type, Type), TypeMap> _typeMaps;
 
     private readonly List<IMappingDefinition> _allMappings;
-    private readonly Dictionary<(Type, Type), IMappingDefinition?> _mappingCache = new();
+
+    // Thread-safe: the mapper is registered as a singleton and may be used concurrently;
+    // this cache is populated during  Map() (via GetMaping) at runtime.
+    private readonly ConcurrentDictionary<(Type, Type), IMappingDefinition?> _mappingCache = new();
 
     public MappingExpression(
      TypeMap typeMap,
@@ -178,11 +182,22 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
             if (sourceValue == null)
                 continue;
 
+            // Auto-map nested collection properties (e.g. List<Order> -> List<OrderDto>).
+            if (IsCollectionType(sourceProp.PropertyType) && IsCollectionType(destProp.PropertyType))
+            {
+                var mappedCollection = MapNestedCollection(sourceValue, sourceProp.PropertyType, destProp.PropertyType, context);
+                if (mappedCollection != null)
+                {
+                    destProp.SetValue(result, mappedCollection);
+                }
+                continue;
+            }
+
             var mapping = GetMapping(sourceProp.PropertyType, destProp.PropertyType);
 
             if (mapping != null)
             {
-                var mappedValue = mapping.Map(sourceValue, context);
+                var mappedValue = MapThroughPipeline(sourceValue, sourceProp.PropertyType, destProp.PropertyType, mapping, context);
                 destProp.SetValue(result, mappedValue);
             }
         }
@@ -312,12 +327,16 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
     // ✅ Helper
     private bool IsSimpleType(System.Type type)
     {
-        return type.IsPrimitive
-            || type.IsEnum
-            || type == typeof(string)
-            || type == typeof(DateTime)
-            || type == typeof(decimal)
-            || type == typeof(Guid);
+        // Treat Nullable<T> the same type as T(e.g. int?,DateTime?, Guid?) so nullable
+        // value-type members are copied directly instead of being silently skipped.
+        var t = Nullable.GetUnderlyingType(type) ?? type;
+
+        return t.IsPrimitive
+            || t.IsEnum
+            || t == typeof(string)
+            || t == typeof(DateTime)
+            || t == typeof(decimal)
+            || t == typeof(Guid);
     }
 
     private IMappingDefinition? GetMapping(Type sourceType, Type destType)
@@ -336,5 +355,86 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
         mapping = _allMappings.FirstOrDefault(m => m.CanHandle(sourceType, destType));
         _mappingCache[key] = mapping;
         return mapping;
+    }
+
+    // Route nested mapping through the mapper's full pipeline so the nested type's own
+    // ConvertUsing / ForMember / Ignore / Condition / ignore-null settings are applied.
+    // Fall back to the raw definition if the context has no TransitioMapper attached.
+    private static object MapThroughPipeline(
+        object source,
+        Type sourceType,
+        Type destType,
+        IMappingDefinition mapping,
+        MappingContext context)
+    {
+        return context.Mapper is TransitioMapper mapper
+        ? mapper.MapWithContext(source, sourceType, destType, context)
+        : mapping.Map(source, context);
+    }
+
+    // Maps a nested collection property, reusing element type maps and the shared
+    // mapping context (so cycle detection still applies). Returns null when no element
+    // mapping is configured, leaving the destination property at its default.
+    private object? MapNestedCollection(object sourceValue, Type sourceType, Type destType, MappingContext context)
+    {
+        var srcItemType = GetCollectionItemType(sourceType);
+        var destItemType = GetCollectionItemType(destType);
+
+        if (srcItemType == null || destItemType == null)
+            return null;
+
+        var itemMapping = GetMapping(srcItemType, destItemType);
+
+        if (itemMapping == null)
+            return null;
+
+        var listType = typeof(List<>).MakeGenericType(destItemType);
+        var list = (System.Collections.IList)Activator.CreateInstance(listType)!;
+
+        foreach (var item in (System.Collections.IEnumerable)sourceValue)
+        {
+            list.Add(item == null ? null : MapThroughPipeline(item, srcItemType, destItemType, itemMapping, context));
+        }
+
+        if (destType.IsArray)
+        {
+            var array = Array.CreateInstance(destItemType, list.Count);
+            list.CopyTo(array, 0);
+            return array;
+        }
+
+        if (destType.IsAssignableFrom(listType) || destType.IsInterface)
+        {
+            return list;
+        }
+        if (Activator.CreateInstance(destType) is System.Collections.IList customList)
+        {
+            foreach (var x in list)
+            {
+                customList.Add(x);
+            }
+            return customList;
+        }
+        return list;
+    }
+
+    private static bool IsCollectionType(Type type)
+    {
+        return type != typeof(string)
+        && typeof(System.Collections.IEnumerable).IsAssignableFrom(type);
+    }
+
+    private static Type? GetCollectionItemType(Type type)
+    {
+        if (type.IsArray)
+            return type.GetElementType();
+
+        if (type.IsGenericType)
+            return type.GetGenericArguments().FirstOrDefault();
+
+        var enumerableInterface = type.GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+
+        return enumerableInterface?.GetGenericArguments().FirstOrDefault();
     }
 }

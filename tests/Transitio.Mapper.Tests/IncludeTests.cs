@@ -210,7 +210,7 @@ public class IncludeTests
         {
             cfg.CreateMap<Person, PersonDto>()
                 .ForMember(d => d.Age, opt => opt.Condition(s => s.Age > 0));
-            
+
             cfg.CreateMap<Employee, EmployeeDto>()
                 .Include<Person, PersonDto>()
                 .ForMember(d => d.Age, opt => opt.Condition(s => s.Age > 18));
@@ -390,7 +390,7 @@ public class IncludeTests
         {
             cfg.CreateMap<Person, PersonDto>()
                 .ForMember(d => d.Age, opt => opt.Ignore());
-            
+
             cfg.CreateMap<Employee, EmployeeDto>()
                 .Include<Person, PersonDto>();
         });
@@ -413,5 +413,44 @@ public class IncludeTests
         Assert.Equal("Henry", employeeDto.Name);
         Assert.Equal(0, employeeDto.Age);  // Ignored from base mapping
         Assert.Equal("Management", employeeDto.Department);
+    }
+
+    [Fact]
+    public void Should_Auto_Map_Team_Members_Collection_Without_ForMember()
+    {
+        // Arrange - no ForMember for Members; relies on automatic nested-collection mapping 
+        // of Employee[] -> EmployeeDto[], with Employee mapping reusing the Person base via include.
+        var config = new TransitioMapperConfiguration(cfg =>
+        {
+            cfg.CreateMap<Person, PersonDto>();
+            cfg.CreateMap<Employee, EmployeeDto>()
+            .Include<Person, PersonDto>();
+            cfg.CreateMap<Team, TeamDto>();
+        });
+
+        var mapper = config.BuildMapper();
+        var team = new Team
+        {
+            Name = "Dev Team",
+            Members = new[]
+            {
+                new Employee{Name = "Frank", Age=30,Department="Dev",Salary=5000m},
+                new Employee{Name = "Grace", Age=28,Department="QA",Salary=4500m},
+            }
+        };
+
+        //Act
+        var teamDto = mapper.Map<TeamDto>(team);
+
+        //Assert
+        Assert.NotNull(teamDto);
+        Assert.Equal("Dev Team", teamDto.Name);
+        Assert.Equal(2, teamDto.Members.Length);
+        Assert.Equal("Frank", teamDto.Members[0].Name);
+        Assert.Equal(30, teamDto.Members[0].Age);
+        Assert.Equal("Dev", teamDto.Members[0].Department);
+        Assert.Equal(5000m, teamDto.Members[0].Salary);
+        Assert.Equal("Grace", teamDto.Members[0].Name);
+        Assert.Equal(4500m, teamDto.Members[0].Salary);
     }
 }

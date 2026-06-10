@@ -10,10 +10,12 @@ public static class TransitioServiceCollectionExtensions
         this IServiceCollection services,
         Action<TransitioConfigBuilder> config)
     {
-        var mapperConfig = new TransitioMapperConfiguration(config);
-        var mapper = mapperConfig.BuildMapper();
+        var mapperConfig = new TransitioMapperConfiguration(config);        
 
-        services.AddSingleton<IMapper>(mapper);
+        //Build the mapper lazily so type-based converters can be resolvedfrom the
+        //container (allowing converters with constructor dependencies).
+        services.AddSingleton<IMapper>(sp=>
+                    mapperConfig.BuildMapper(type => ActivatorUtilities.CreateInstance(sp, type)));
         services.AddSingleton<TransitioDependency>();
 
         return services;

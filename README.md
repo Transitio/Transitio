@@ -11,8 +11,9 @@
 
 - ⚡ Expression-based high-performance mapping
 - 🧩 Profiles for modular configuration
-- 🔗 Nested object mapping
+- 🔗 Nested object mapping (including nested collection properties)
 - 📦 Collection mapping (List → List, IEnumerable → array, IEnumerable → interface)
+- 🧵 Thread-safe: a single mapper instance can be shared as a singleton
 
 ### 🎯 Custom Mapping Capabilities
 - 🔧 Custom member mapping with `ForMember(...).MapFrom(...)`
@@ -38,9 +39,15 @@
 
 ### ⚙️ Integration & Platform
 - 💉 Built-in dependency injection support (`Microsoft.Extensions.DependencyInjection`)
+- Type-based converters (`ConvertUsing<TConverter>()`) are resolved from the container, so sonverts may declare constructor dependencies
 - 🎯 Supports .NET 8 & .NET 10
 
 ---
+
+## ℹ️ Mapping rules & limitations
+- Only **public properties** are mapped. Public fields are not mapped automatically - expose data as properties, or populate fields with a custom `ConvertUsing(...)` converter.
+- Members are matched by **name**; "simple" members (primitives. `string`, `enum`, `DateTime`, `decimal`. `Guid`) are copied directly, and complex/collection members are mapped recursively when a corresponding `CreateMap` exists.
+- For derived element types in collections, register a `CreateMap` for the concrete element type (maps are matched by exact type).
 
 ## 🆕 What’s New
 
@@ -61,9 +68,10 @@
 
 ## 📦 Installation
 
-bash
+```bash
 dotnet add package Transitio.Mapper
 dotnet add package Transitio.Dependency
+```
 
 ## 👨‍💻 Maintainers
 
