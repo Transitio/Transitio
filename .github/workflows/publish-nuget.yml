@@ -5,58 +5,74 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-  
+    inputs:
+      publish:
+        description: "Publish to NuGet?"
+        required: true
+        default: "false"
+
 permissions:
-    contents: write
-    
+  contents: write
+
 jobs:
   build-pack-publish:
     runs-on: ubuntu-latest
 
     steps:
-      # ✅ Checkout code
-      - name: Checkout
-        uses: actions/checkout@v4
+      # ✅ Checkout
+      - uses: actions/checkout@v4
 
-      # ✅ Setup .NET 8
-      - name: Setup .NET 8
-        uses: actions/setup-dotnet@v4
+      # ✅ Setup .NET
+      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
-      # ✅ Setup .NET 10
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      # ✅ Restore dependencies
-      - name: Restore
-        run: dotnet restore
+      # ✅ Restore
+      - run: dotnet restore
 
       # ✅ Build
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
+      - run: dotnet build --configuration Release --no-restore
 
-      # ✅ Pack all projects
+      # ✅ ✅ Security Scan (FIRST)
+      - name: Security Scan
+        run: dotnet list package --vulnerable --include-transitive
+
+      # ✅ ✅ Unit Tests (SECOND)
+      - name: Run Unit Tests
+        run: dotnet test --configuration Release --no-build
+
+      # ✅ Extract version (SIMPLE ✅)
+      - name: Extract Version
+        id: version_step
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
+
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      # ✅ Pack
       - name: Pack
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
           dotnet pack --configuration Release --no-build \
-            -p:PackageVersion=$VERSION \
-            -p:Version=$VERSION \
+            -p:PackageVersion=${{ steps.version_step.outputs.version }} \
+            -p:Version=${{ steps.version_step.outputs.version }} \
             -o ./nupkgs
 
-      # ✅ Publish Mapper FIRST
+      # ✅ Publish Mapper
       - name: Publish Mapper
+        if: ${{ github.event_name == 'push' || github.event.inputs.publish == 'true' }}
         run: |
           dotnet nuget push ./nupkgs/Transitio.Mapper*.nupkg \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
 
-      # ✅ Publish Dependency AFTER (with delay)
+      # ✅ Publish Dependency
       - name: Publish Dependency
+        if: ${{ github.event_name == 'push' || github.event.inputs.publish == 'true' }}
         run: |
           sleep 30
           dotnet nuget push ./nupkgs/Transitio.Dependency*.nupkg \
@@ -64,20 +80,12 @@ jobs:
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
 
-      # ✅ Create GitHub Release
+      # ✅ GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Transitio ${{ github.ref_name }}
-          body: |
-            🚀 Release ${{ github.ref_name }}
-
-            - NuGet packages published
-            - Includes Transitio.Mapper and Transitio.Dependency
-            - Improvements and fixes
-
-          files: |
-            ./nupkgs/*.nupkg
+          tag_name: ${{ steps.version_step.outputs.tag }}
+          name: Transitio ${{ steps.version_step.outputs.tag }}
+          files: ./nupkgs/*.nupkg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
