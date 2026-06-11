@@ -5,7 +5,7 @@
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
 
     <PackageId>Transitio.Mapper</PackageId>    
-    <Authors>Transitio Team</Authors>
+    <Authors>Transitio</Authors>
 
     <Description>Lightweight high-performance object mapping framework</Description>
     <PackageTags>mapper automapper mapping dto object-mapper</PackageTags>
@@ -17,7 +17,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
     <PackageOutputPath>./nupkgs</PackageOutputPath>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageLogo>logo.png</PackageLogo>
   </PropertyGroup>
   <ItemGroup>

@@ -75,11 +75,10 @@ dotnet add package Transitio.Dependency
 
 ## 👨‍💻 Maintainers
 
-Maintained by the **Transitio Team**
+Maintained by the **Transitio**
 
 - GitHub: https://github.com/Transitio/Transitio
 
 ## 📄 License
 
-This software is provided under a custom proprietary license.
-Commercial licensing options may be available in the future.
+This project is licensed under the [MIT License](LICENSE.txt)

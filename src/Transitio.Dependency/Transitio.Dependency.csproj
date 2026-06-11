@@ -4,14 +4,14 @@
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
 
     <PackageId>Transitio.Dependency</PackageId>    
-    <Authors>Transitio Team</Authors>
+    <Authors>Transitio</Authors>
     <RepositoryUrl>https://github.com/Transitio/Transitio</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/Transitio/Transitio</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Dependency wrapper for Transitio</Description>
     <PackageOutputPath>./nupkgs</PackageOutputPath>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageLogo>logo.png</PackageLogo>
   </PropertyGroup>
 
