@@ -16,6 +16,12 @@ public class TransitioMapperConfiguration
         var builder = new TransitioConfigBuilder(_mappings, _typeMaps);
         config(builder);
         _ignoreNullValues = builder.IgnoreNullValues;
+
+        // Fail fast at build time when the caller opted in via VAlidateConfiguration().
+        // Runs after the whole config delegate (including any assembly scanning) has
+        // populated every map.
+        if(builder.ShouldValidateConfiguration)
+        AssertConfigurationIsValid();
     }
 
     public IMapper BuildMapper()

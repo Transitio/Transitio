@@ -82,4 +82,32 @@ public class ValidationTests
 
         Assert.Contains("Type mismatch", ex.Message);
     }
+
+    // ✅ 6. ValidateConfiguration() validates eagerly at build time
+    [Fact]
+    public void Should_Throw_At_Build_Time_When_ValidateConfiguration_Opted_In()
+    {
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            new TransitioMapperConfiguration(cfg =>
+            {
+                cfg.ValidateConfiguration();
+                cfg.CreateMap<User, BadDto>();
+            }));
+
+        Assert.Contains("Missing source property", ex.Message);
+    }
+
+    // ✅ 7. ValidateConfiguration() with a valid config builds cleanly
+    [Fact]
+    public void Should_Not_Throw_At_Build_Time_For_Valid_Config_When_Opted_In()
+    {
+        var exception = Record.Exception(() =>
+            new TransitioMapperConfiguration(cfg =>
+            {
+                cfg.ValidateConfiguration();
+                cfg.CreateMap<User, UserDto>();
+            }));
+
+        Assert.Null(exception);
+    }
 }
