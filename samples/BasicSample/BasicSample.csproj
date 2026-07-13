@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Transitio.Mapper\Transitio.Mapper.csproj" />
     <ProjectReference Include="..\..\src\Transitio.Dependency\Transitio.Dependency.csproj" />
+    <ProjectReference Include="..\..\src\Transitio.Validation\Transitio.Validation.csproj" />
   </ItemGroup>
 
   <ItemGroup>

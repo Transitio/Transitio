@@ -59,6 +59,8 @@ See the [Getting Started](docs/getting-started.md) guide.
   and [configuration validation](docs/mapping-features.md#configuration-validation--assertconfigurationisvalid)  
 - 📦 [Dependency injection](docs/dependency-injection.md): assembly scanning, configurable lifetimes  
   (scoped converters), fail-fast validation, and keyed mappers  
+- ✅ [Object validation](docs/validation.md) with the standalone `Transitio.Validation` package
+  (fluent rules, `ValidationResult`, DI registration)
 - 🎯 Supports .NET 8 & .NET 10  
 
 ---
@@ -70,7 +72,7 @@ See the [Getting Started](docs/getting-started.md) guide.
 - [Full Object Transformation](docs/converters.md) – `ConvertUsing` (type / instance / delegate) and `IMappingContext`  
 - [Inheritance & Reusability](docs/inheritance.md) – `Include` / `IncludeBase`  
 - [Dependency Injection](docs/dependency-injection.md) – `AddTransitio`, assembly scanning, lifetimes, validation, keyed mappers  
-
+- [Object Validation](docs/validation.md) - `AbstractValidator<T>`, `RuleFor`, built-in rules, `AddTransitioValidtion`
 A runnable end-to-end demo lives in [`samples/BasicSample`](samples/BasicSample).
 
 See the [Changelog](CHANGELOG.md) for release history.

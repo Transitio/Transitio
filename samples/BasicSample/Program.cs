@@ -1,5 +1,6 @@
 ﻿using BasicSample.MapperFeatures;
 using BasicSample.DependencyFeatures;
+using BasicSample.ValidationFeatures;
 
 // Core Transitio.Mapper features: profiles, ForMember, Condition, Ignore,
 // reverse mapping, IgnoreNullValues, ConvertUsing, Include/IncludeBase, and
@@ -11,3 +12,9 @@ Console.WriteLine();
 // Transitio.Dependency (DI-layer) features: assembly scanning, direct IMapper
 // injection, keyed mappers, scoped converters, and fail-fast validation.
 DependencyFeaturesDemo.Run();
+
+Console.WriteLine();
+
+// Transitio.Validation features: fluent rule declaration, Continue cascade,
+// ValidateAndThrow, and DI registration via AddTransitioValidation.
+ValidationFeaturesDemo.Run();
