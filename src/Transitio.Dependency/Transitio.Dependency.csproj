@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Transitio.Mapper\Transitio.Mapper.csproj" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
   </ItemGroup>
   <ItemGroup>
   <None Include="..\..\README.md" Pack="true" PackagePath="\" />
