@@ -9,7 +9,6 @@
 
     <Description>Lightweight high-performance object mapping framework</Description>
     <PackageTags>mapper automapper mapping dto object-mapper</PackageTags>
-
     <RepositoryUrl>https://github.com/Transitio/Transitio</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/Transitio/Transitio</PackageProjectUrl>

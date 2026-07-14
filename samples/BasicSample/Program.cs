@@ -1,6 +1,7 @@
 ﻿using BasicSample.MapperFeatures;
 using BasicSample.DependencyFeatures;
 using BasicSample.ValidationFeatures;
+using BasicSample.MediatorFeatures;
 
 // Core Transitio.Mapper features: profiles, ForMember, Condition, Ignore,
 // reverse mapping, IgnoreNullValues, ConvertUsing, Include/IncludeBase, and
@@ -18,3 +19,9 @@ Console.WriteLine();
 // Transitio.Validation features: fluent rule declaration, Continue cascade,
 // ValidateAndThrow, and DI registration via AddTransitioValidation.
 ValidationFeaturesDemo.Run();
+
+Console.WriteLine();
+
+// Transitio.Mediator features: request/response, notifications with multiple
+// handlers, and pipeline behaviors, wired via AddTransitioMediator.
+await MediatorFeaturesDemo.RunAsync();

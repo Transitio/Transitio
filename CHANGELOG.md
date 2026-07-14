@@ -5,7 +5,32 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),  
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.7, 1.0.8] 2026-07-13
+## [1.1.0] 2026-07-14
+
+### Added
+- **`Transitio.Mediator`** — a new standalone, in-process mediator package. Send requests to a single handler with `mediator.Send(...)`
+  (`IRequest<TResponse>` / `IRequestHandler<TRequest, TResponse>`), including void requests via `IRequest` / `IRequestHandler<TRequest>`,
+  and publish notifications to many handlers with `mediator.Publish(...)` (`INotification` / `INotificationHandler<TNotification>`).
+- **Pipeline behaviors** — `IPipelineBehavior<TRequest, TResponse>` wraps request handling for cross-cutting concerns (logging,
+  validation, transactions); behaviors run in registration order and can short-circuit or transform the response.
+- **DI registration** — `AddTransitioMediator(params Assembly[])` (and a `ServiceLifetime` overload) registers `IMediator`/`ISender`/
+  `IPublisher` and scans for handlers and closed pipeline behaviors (default `Transient`).
+- Documentation: `docs/mediator.md`, plus a `MediatorFeaturesDemo` in `samples/BasicSample`.
+
+### Changed
+- **`Transitio.Validation` and `Transitio.Mediator`** now depend on `Microsoft.Extensions.DependencyInjection.Abstractions` instead of
+  the full `Microsoft.Extensions.DependencyInjection` package. Both libraries only register and resolve services, so the lighter contracts
+  package is the correct dependency. Consumers that relied on the concrete container flowing transitively (e.g. calling
+  `BuildServiceProvider()` without referencing it directly) should add `Microsoft.Extensions.DependencyInjection` themselves — as most host
+  applications already do.
+
+
+## [1.0.8] 2026-07-13
+
+### Changed
+- Document alignment.
+
+## [1.0.7] 2026-07-13
 
 ### Added
 - **`Transitio.Validation`** — a new standalone, fluent object-validation package. Derive from `AbstractValidator<T>` and declare rules with `RuleFor(...)`; validation returns a `ValidationResult` (`IsValid`, `Errors`) and `ValidateAndThrow` raises a `ValidationException`.
@@ -64,8 +89,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial release of the Transitio mapping framework: `CreateMap`, profiles, name-based member mapping, nested object mapping, and `Microsoft.Extensions.DependencyInjection` integration via `Transitio.Dependency`.
-
-[1.0.7]: https://github.com/Transitio/Transitio/compare/v1.0.6...HEAD  
+[1.1.0]: https://github.com/Transitio/Transitio/compare/v1.0.8...HEAD  
+[1.0.8]: https://github.com/Transitio/Transitio/compare/v1.0.7...v1.0.8  
+[1.0.7]: https://github.com/Transitio/Transitio/compare/v1.0.6...v1.0.7  
 [1.0.6]: https://github.com/Transitio/Transitio/compare/v1.0.5...v1.0.6  
 [1.0.5]: https://github.com/Transitio/Transitio/compare/v1.0.4...v1.0.5  
 [1.0.4]: https://github.com/Transitio/Transitio/compare/v1.0.2...v1.0.3  

@@ -4,6 +4,7 @@
     <ProjectReference Include="..\..\src\Transitio.Mapper\Transitio.Mapper.csproj" />
     <ProjectReference Include="..\..\src\Transitio.Dependency\Transitio.Dependency.csproj" />
     <ProjectReference Include="..\..\src\Transitio.Validation\Transitio.Validation.csproj" />
+    <ProjectReference Include="..\..\src\Transitio.Mediator\Transitio.Mediator.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -15,6 +16,7 @@
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
 </Project>

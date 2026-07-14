@@ -10,6 +10,9 @@
     <PackageProjectUrl>https://github.com/Transitio/Transitio</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Dependency wrapper for Transitio</Description>
+    <PackageTags>mapper automapper mapping dto dependency-injection di ioc</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
     <PackageOutputPath>./nupkgs</PackageOutputPath>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageLogo>logo.png</PackageLogo>

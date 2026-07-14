@@ -90,6 +90,16 @@ jobs:
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
 
+      # ✅ Publish Mediator
+      - name: Publish Mediator
+        if: ${{ github.event_name == 'push' || github.event.inputs.publish == 'true' }}
+        run: |
+          sleep 30
+          dotnet nuget push ./nupkgs/Transitio.Mediator*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
       # ✅ GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
