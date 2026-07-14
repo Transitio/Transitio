@@ -67,7 +67,8 @@ See the [Getting Started](https://github.com/Transitio/Transitio/tree/main/docs/
   (scoped converters), fail-fast validation, and keyed mappers  
 - ✅ [Object validation](https://github.com/Transitio/Transitio/tree/main/docs/validation.md) with the standalone `Transitio.Validation` package
   (fluent rules, `ValidationResult`, DI registration)
-- 📨 [Mediator](https://github.com/Transitio/Transitio/tree/main/docs/mediator.md) with the standalone `Transitio.Mediator` package (request/response, notifications, pipeline behaviors, DI registration)
+- 📨 [Mediator](https://github.com/Transitio/Transitio/tree/main/docs/mediator.md) with the standalone `Transitio.Mediator` package 
+(request/response, notifications, pipeline behaviors, DI registration)
 - 🎯 Supports .NET 8 & .NET 10  
 
 ---
@@ -80,7 +81,7 @@ See the [Getting Started](https://github.com/Transitio/Transitio/tree/main/docs/
 - [Inheritance & Reusability](https://github.com/Transitio/Transitio/tree/main/docs/inheritance.md) – `Include` / `IncludeBase`  
 - [Dependency Injection](https://github.com/Transitio/Transitio/tree/main/docs/dependency-injection.md) – `AddTransitio`, assembly scanning, lifetimes, validation, keyed mappers  
 - [Object Validation](https://github.com/Transitio/Transitio/tree/main/docs/validation.md) - `AbstractValidator<T>`, `RuleFor`, built-in rules, `AddTransitioValidation`
-- [Mediator](https://github.com/Transitio/Transitio/tree/main/docs/mediator.md) - `IRequest`/`IRequestHandler`, `INotification`/`INotificationHandler`,`IPipelineBehavior`,`AddTransitioMediator`
+- [Mediator](https://github.com/Transitio/Transitio/tree/main/docs/mediator.md) - `IRequest`/`IRequestHandler`, `INotification`/`INotificationHandler`, `IPipelineBehavior`, `AddTransitioMediator`
 A runnable end-to-end demo lives in [`samples/BasicSample`](https://github.com/Transitio/Transitio/tree/main/samples/BasicSample).
 
 See the [Changelog](https://github.com/Transitio/Transitio/blob/main/CHANGELOG.md) for release history.

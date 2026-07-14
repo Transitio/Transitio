@@ -1,15 +1,12 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Transitio.Mediator;
 
 namespace BasicSample.MediatorFeatures;
 
-// ========================================================================
+// ============================================================================
 // Requests, notifications, handlers, and a pipeline behavior used by the
 // Transitio.Mediator feature demo.
-// ========================================================================
+// ============================================================================
 
 // A request that returns a value.
 public sealed class Greet : IRequest<string>
@@ -35,7 +32,7 @@ public sealed class SendWelcomeEmail : INotificationHandler<UserRegistered>
 {
     public Task Handle(UserRegistered notification, CancellationToken cancellationToken)
     {
-        Console.WriteLine($"  [email]   welcome sent to {notification.Email}");
+        Console.WriteLine($"  [email]  welcome sent to {notification.Email}");
         return Task.CompletedTask;
     }
 }
@@ -44,7 +41,7 @@ public sealed class WriteAuditLog : INotificationHandler<UserRegistered>
 {
     public Task Handle(UserRegistered notification, CancellationToken cancellationToken)
     {
-        Console.WriteLine($"  [audit]   registered {notification.Email}");
+        Console.WriteLine($"  [audit]  registered {notification.Email}");
         return Task.CompletedTask;
     }
 }

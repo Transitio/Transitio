@@ -2,7 +2,7 @@ namespace Transitio.Mediator;
 
 /// <summary>
 /// Entry point for sending requests and publishing notifications. Combines <see cref="ISender"/> and
-/// <see cref="IPublisher"/>; resolve it from the container after calling <c>AddTransitioMediator</c>
+/// <see cref="IPublisher"/>; resolve it from the container after calling <c>AddTransitioMediator</c>.
 /// <code>
 /// public record Ping(string Message) : IRequest&lt;string&gt;;
 ///
