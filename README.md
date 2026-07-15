@@ -34,10 +34,16 @@ Using DI? Register with `services.AddTransitio(...)` and inject `IMapper`.
 Full docs live in the **[project wiki](https://github.com/Transitio/Transitio/wiki)**:
 
 - [Getting Started](https://github.com/Transitio/Transitio/wiki/Getting-Started)
-- [Transitio.Mapper](https://github.com/Transitio/Transitio/wiki/Transitio.Mapper) · [Transitio.Dependency](https://github.com/Transitio/Transitio/wiki/Transitio.Dependency) · [Transitio.Validation](https://github.com/Transitio/Transitio/wiki/Transitio.Validation) · [Transitio.Mediator](https://github.com/Transitio/Transitio/wiki/Transitio.Mediator)
-- [FAQ](https://github.com/Transitio/Transitio/wiki/FAQ) · [Roadmap](https://github.com/Transitio/Transitio/wiki/Roadmap) · [Contributing](https://github.com/Transitio/Transitio/wiki/Contributing)
+- [Transitio.Mapper](https://github.com/Transitio/Transitio/wiki/Transitio.Mapper)
+- [Transitio.Dependency](https://github.com/Transitio/Transitio/wiki/Transitio.Dependency)
+- [Transitio.Validation](https://github.com/Transitio/Transitio/wiki/Transitio.Validation)
+- [Transitio.Mediator](https://github.com/Transitio/Transitio/wiki/Transitio.Mediator)
+- [FAQ](https://github.com/Transitio/Transitio/wiki/FAQ)
+- [Roadmap](https://github.com/Transitio/Transitio/wiki/Roadmap)
+- [Contributing](https://github.com/Transitio/Transitio/wiki/Contributing)
 
-Runnable demo: [`samples/BasicSample`](https://github.com/Transitio/Transitio/tree/main/samples/BasicSample). See the [Changelog](https://github.com/Transitio/Transitio/blob/main/CHANGELOG.md) for release history.
+Runnable demo: [`samples/BasicSample`](https://github.com/Transitio/Transitio/tree/main/samples/BasicSample). 
+See the [Changelog](https://github.com/Transitio/Transitio/blob/main/CHANGELOG.md) for release history.
 
 ## 👤 Maintainers
 
