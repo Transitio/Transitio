@@ -100,6 +100,16 @@ jobs:
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
 
+      # ✅ Publish Assertions
+      - name: Publish Assertions
+        if: ${{ github.event_name == 'push' || github.event.inputs.publish == 'true' }}
+        run: |
+          sleep 30
+          dotnet nuget push ./nupkgs/Transitio.Assertions*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
       # ✅ GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),  
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-18
+
+### Added
+- **`Transitio.Assertions`** — a new standalone, fluent assertion package for tests. Call `.Should()` on any
+  value to begin an assertion chain (`value.Should().Be(expected)`, `name.Should().StartWith("Tra")`,
+  `items.Should().HaveCount(3).And.Contain("x")`, `age.Should().BeInRange(0, 120)`), with clear, readable
+  failure messages and an optional `because` reason on every assertion.
+- Assertion families: object equality/nullability/type (`Be`, `NotBe`, `BeNull`, `BeOfType<T>`,
+  `BeAssignableTo<T>`, `BeSameAs`), booleans, strings (`Contain`, `StartWith`, `EndWith`, `HaveLength`,
+  `Match` with `*`/`?` wildcards), numbers (`BeGreaterThan`, `BeInRange`, `BePositive`, `BeNegative`,
+  `BeApproximately` for floating-point), other comparables such as `DateTime`/`DateTimeOffset`/`TimeSpan`/`char`
+  (ordering and range), collections (`BeEmpty`, `HaveCount`, `Contain`, `OnlyContain`, `BeEquivalentTo`),
+  and exceptions (`act.Should().Throw<T>().WithMessage("*..*")`, `WithInnerException<T>`, `ThrowAsync<T>`).
+- The package is **dependency-free** and framework-agnostic — it throws its own `AssertionException`, so it
+  works under xUnit, NUnit, or MSTest without referencing any of them.
+- Documentation: `docs/assertions.md`.
+
 ## [1.1.0] 2026-07-14
 
 ### Added
@@ -89,7 +106,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial release of the Transitio mapping framework: `CreateMap`, profiles, name-based member mapping, nested object mapping, and `Microsoft.Extensions.DependencyInjection` integration via `Transitio.Dependency`.
-[1.1.0]: https://github.com/Transitio/Transitio/compare/v1.0.8...HEAD  
+
+[1.2.0]: https://github.com/Transitio/Transitio/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Transitio/Transitio/compare/v1.0.8...v1.1.0
 [1.0.8]: https://github.com/Transitio/Transitio/compare/v1.0.7...v1.0.8  
 [1.0.7]: https://github.com/Transitio/Transitio/compare/v1.0.6...v1.0.7  
 [1.0.6]: https://github.com/Transitio/Transitio/compare/v1.0.5...v1.0.6  

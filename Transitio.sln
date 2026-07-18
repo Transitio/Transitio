@@ -23,10 +23,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transitio.Validation", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transitio.Validation.Tests", "tests\Transitio.Validation.Tests\Transitio.Validation.Tests.csproj", "{86053A72-466D-4914-9194-3FFF4AFE1C92}"
 EndProject
-
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transitio.Mediator", "src\Transitio.Mediator\Transitio.Mediator.csproj", "{55848580-AB4B-4E87-B9B8-7A5E0456255A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transitio.Mediator.Tests", "tests\Transitio.Mediator.Tests\Transitio.Mediator.Tests.csproj", "{3014CB76-4928-41BA-BD84-171B6D4BF1EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transitio.Assertions", "src\Transitio.Assertions\Transitio.Assertions.csproj", "{B44F8559-F902-4441-ACE7-6530DDD05FC9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transitio.Assertions.Tests", "tests\Transitio.Assertions.Tests\Transitio.Assertions.Tests.csproj", "{C662D060-5717-4D22-A8EA-7C364403BB8B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -146,6 +149,30 @@ Global
 		{3014CB76-4928-41BA-BD84-171B6D4BF1EF}.Release|x64.Build.0 = Release|Any CPU
 		{3014CB76-4928-41BA-BD84-171B6D4BF1EF}.Release|x86.ActiveCfg = Release|Any CPU
 		{3014CB76-4928-41BA-BD84-171B6D4BF1EF}.Release|x86.Build.0 = Release|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Debug|x64.Build.0 = Debug|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Debug|x86.Build.0 = Debug|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Release|x64.ActiveCfg = Release|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Release|x64.Build.0 = Release|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Release|x86.ActiveCfg = Release|Any CPU
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9}.Release|x86.Build.0 = Release|Any CPU		
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Debug|x64.Build.0 = Debug|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Debug|x86.Build.0 = Debug|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Release|x64.ActiveCfg = Release|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Release|x64.Build.0 = Release|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Release|x86.ActiveCfg = Release|Any CPU
+		{C662D060-5717-4D22-A8EA-7C364403BB8B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -160,5 +187,7 @@ Global
 		{86053A72-466D-4914-9194-3FFF4AFE1C92} = {DC67B457-4273-48E9-8911-D339EBAED420}
 		{55848580-AB4B-4E87-B9B8-7A5E0456255A} = {1E9533B6-723B-4CD5-A3C4-20D909BC7F9A}
 		{3014CB76-4928-41BA-BD84-171B6D4BF1EF} = {DC67B457-4273-48E9-8911-D339EBAED420}
+		{B44F8559-F902-4441-ACE7-6530DDD05FC9} = {1E9533B6-723B-4CD5-A3C4-20D909BC7F9A}
+		{C662D060-5717-4D22-A8EA-7C364403BB8B} = {DC67B457-4273-48E9-8911-D339EBAED420}
 	EndGlobalSection
 EndGlobal
