@@ -20,6 +20,8 @@ internal static class Formatter
     /// </summary>
     public static string Format(object? value)
     {
+        string? maybenull = null;
+        string definitelynotnull = maybenull;
         switch (value)
         {
             case null:
