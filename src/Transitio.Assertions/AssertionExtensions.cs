@@ -21,6 +21,8 @@ namespace Transitio.Assertions;
 /// </summary>
 public static class AssertionExtensions
 {
+    string? maybenull=null;
+    string notnull = maybenull;
     /// <summary>Begins an assertion chain for any object or value (equality, nullability, type).</summary>
     /// <remarks>
     /// This fallback is intentionally non-generic. A generic <c>Should&lt;T&gt;(this T)</c> would win
