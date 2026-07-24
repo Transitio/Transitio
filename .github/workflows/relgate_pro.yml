@@ -1,0 +1,21 @@
+name: RelGate Pro Check
+on: 
+  pull_request:
+    paths:
+      - '**/*.cs'
+
+jobs:
+  relgate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # required - Relgate posts its report as a PR comment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: MigrateIQ/relgate/pro@main
+        with:
+          license-key:  ${{secrets.RELGATE_LICENSE_KEY}}
+          dotnet-version:  '8.0.x'
+          project-path:  'Transitio.sln'
+    
+  
