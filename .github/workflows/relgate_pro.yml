@@ -6,7 +6,7 @@ jobs:
   relgate:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write # required - Relgate posts its report as a PR comment
     steps:
       - uses: actions/checkout@v4
