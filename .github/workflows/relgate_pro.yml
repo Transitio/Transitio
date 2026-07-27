@@ -12,7 +12,7 @@ jobs:
       pull-requests: write # required - Relgate posts its report as a PR comment
     steps:
       - uses: actions/checkout@v4
-      - uses: MigrateIQ/relgate/pro@main
+      - uses: MigrateIQ/relgate/pro@v1
         with:
           license-key:  ${{secrets.RELGATE_LICENSE_KEY}}
           dotnet-version:  '8.0.x'
