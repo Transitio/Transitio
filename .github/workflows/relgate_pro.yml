@@ -17,5 +17,6 @@ jobs:
           license-key:  ${{secrets.RELGATE_LICENSE_KEY}}
           dotnet-version:  '8.0.x'
           project-path:  'Transitio.sln'
+          auto-remediate: 'true'
     
   
