@@ -10,7 +10,7 @@ jobs:
       pull-requests: write # required - Relgate posts its report as a PR comment
     steps:
       - uses: actions/checkout@v4
-      - uses: MigrateIQ/relgate@main
+      - uses: MigrateIQ/relgate@v1
         with:
           dotnet-version:  '8.0.x'
           project-path:  'Transitio.sln'
