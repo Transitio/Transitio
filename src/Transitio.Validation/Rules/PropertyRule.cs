@@ -1,47 +1,50 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-
+ 
 namespace Transitio.Validation;
-
+ 
 /// <summary>A single configured validator attached to a property.</summary>
 internal sealed class RuleComponent<T, TProperty>
 {
     public required Func<T, TProperty, bool> Predicate { get; init; }
-
+ 
     /// <summary>
     /// Builds the failure message from (propertyName, value). Mutable so
     /// <c>WithMessage</c> can replace it.
     /// </summary>
     public Func<string, TProperty, string> MessageFactory { get; set; } = (name, _) => $"'{name}' is invalid.";
-
+ 
     public string? ErrorCode { get; set; }
 }
-
+ 
 /// <summary>Non-generic view so <see cref="AbstractValidator{T}"/> can run rules uniformly.</summary>
 internal interface IPropertyRule<in T>
 {
     IEnumerable<ValidationFailure> Validate(T instance);
 }
-
+ 
 internal sealed class PropertyRule<T, TProperty> : IPropertyRule<T>
 {
     private readonly Func<T, TProperty> _accessor;
-
+ 
     public PropertyRule(Expression<Func<T, TProperty>> expression)
     {
         PropertyName = ExpressionHelper.GetMemberName(expression);
         _accessor = expression.Compile();
     }
-
+ 
     public string PropertyName { get; }
-
+ 
     public List<RuleComponent<T, TProperty>> Components { get; } = new();
-
+ 
+    /// <summary>Cascade behavior for this property's validators. Checked per-component, so it applies wherever <c>.Cascade(...)</c> appears in the chain.</summary>
+    public CascadeMode Mode { get; set; } = CascadeMode.Continue;
+ 
     public IEnumerable<ValidationFailure> Validate(T instance)
     {
         var value = _accessor(instance);
-
+ 
         foreach (var component in Components)
         {
             if (!component.Predicate(instance, value))
@@ -51,6 +54,9 @@ internal sealed class PropertyRule<T, TProperty> : IPropertyRule<T>
                     component.MessageFactory(PropertyName, value),
                     value,
                     component.ErrorCode);
+ 
+                if (Mode == CascadeMode.StopOnFirstFailure)
+                    yield break;
             }
         }
     }
