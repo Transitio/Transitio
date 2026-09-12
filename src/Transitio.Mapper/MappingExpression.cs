@@ -5,23 +5,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-
+ 
 namespace Transitio.Mapper;
-
+ 
 public class MappingExpression<TSource, TDestination> : IMappingDefinition
 {
     private Func<TSource, TDestination>? _compiledFunc;
     private Func<TSource, TDestination>? _customFunc;
-
+    private Action<TSource, TDestination>? _compiledAssign;
+ 
     private readonly TypeMap _typeMap;
     private readonly Dictionary<(Type, Type), TypeMap> _typeMaps;
-
+ 
     private readonly List<IMappingDefinition> _allMappings;
-
+ 
     // Thread-safe: the mapper is registered as a singleton and may be used concurrently;
     // this cache is populated during  Map() (via GetMaping) at runtime.
     private readonly ConcurrentDictionary<(Type, Type), IMappingDefinition?> _mappingCache = new();
-
+ 
     public MappingExpression(
      TypeMap typeMap,
      Dictionary<(Type, Type), TypeMap> typeMaps,
@@ -31,14 +32,14 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
         _typeMaps = typeMaps;
         _allMappings = mappings;
     }
-
+ 
     // ✅ Custom mapping
     public MappingExpression<TSource, TDestination> Using(Func<TSource, TDestination> func)
     {
         _customFunc = func;
         return this;
     }
-
+ 
     /// <summary>
     /// Specifies a type converter to handle the entire type transformation.
     /// The converter type will be instantiated when mapping occurs.
@@ -52,7 +53,7 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
         _typeMap.ConverterDelegate = null;
         return this;
     }
-
+ 
     /// <summary>
     /// Specifies a pre-instantiated type converter to handle the entire type transformation.
     /// </summary>
@@ -64,7 +65,7 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
         _typeMap.ConverterDelegate = null;
         return this;
     }
-
+ 
     /// <summary>
     /// Specifies a custom delegate converter to handle the entire type transformation.
     /// The delegate receives the source and mapping context for full control.
@@ -77,7 +78,7 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
         _typeMap.ConverterType = null;
         return this;
     }
-
+ 
     /// <summary>
     /// Includes mappings from a base/parent type, applying them before derived type mappings.
     /// The derived type mappings can override base mappings through ForMember configurations.
@@ -93,9 +94,9 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
                 $"Cannot include mapping {typeof(TBaseSource).Name} -> {typeof(TBaseDestination).Name}: " +
                 $"{typeof(TBaseSource).Name} is not a base type of {typeof(TSource).Name}");
         }
-
+ 
         var includedKey = (typeof(TBaseSource), typeof(TBaseDestination));
-
+ 
         // Check for circular includes
         if (WouldCreateCircularInclude(includedKey, new HashSet<(Type, Type)>()))
         {
@@ -103,11 +104,11 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
                 $"Circular include detected: {typeof(TSource).Name} -> {typeof(TDestination).Name} " +
                 $"includes {typeof(TBaseSource).Name} -> {typeof(TBaseDestination).Name}");
         }
-
+ 
         _typeMap.IncludedMaps.Add(includedKey);
         return this;
     }
-
+ 
     /// <summary>
     /// Includes mappings from a base type. Alias for Include for explicit base class mapping.
     /// </summary>
@@ -117,16 +118,16 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
     {
         return Include<TBaseSource, TBaseDestination>();
     }
-
+ 
     private bool WouldCreateCircularInclude(
         (Type, Type) includedKey,
         HashSet<(Type, Type)> visited)
     {
         if (visited.Contains(includedKey))
             return true;
-
+ 
         visited.Add(includedKey);
-
+ 
         if (_typeMaps.TryGetValue(includedKey, out var includedTypeMap))
         {
             foreach (var nestedInclude in includedTypeMap.IncludedMaps)
@@ -135,22 +136,22 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
                     return true;
             }
         }
-
+ 
         return false;
     }
-
+ 
     // ✅ Single correct implementation
     public bool CanHandle(System.Type sourceType, System.Type destinationType)
     {
         return sourceType == typeof(TSource) &&
                destinationType == typeof(TDestination);
     }
-
+ 
     public object Map(object source, MappingContext context)
     {
         if (context.ObjectCache.TryGetValue(source, out var cached))
             return cached;
-
+ 
         var customFunc = _customFunc;
         if (customFunc != null)
         {
@@ -158,30 +159,39 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
             context.ObjectCache[source] = customResult!;
             return customResult!;
         }
-
+ 
         var compiled = _compiledFunc ??= BuildExpression();
         var result = compiled((TSource)source);
         context.ObjectCache[source] = result!;
-
-        // ✅ Nested mapping
+ 
+        ApplyNestedMappings(source, result!, context);
+ 
+        return result!;
+    }
+ 
+    // Maps every non-simple destination property (nested objects/collections) from source onto
+    // an already-constructed result. Shared by Map() and MapInto() so both the create-new and
+    // map-into-existing-instance paths apply the same nested-mapping rules.
+    private void ApplyNestedMappings(object source, object result, MappingContext context)
+    {
         foreach (var destProp in typeof(TDestination).GetProperties())
         {
             if (!destProp.CanWrite)
                 continue;
-
+ 
             var sourceProp = typeof(TSource).GetProperty(destProp.Name);
-
+ 
             if (sourceProp == null)
                 continue;
-
+ 
             if (IsSimpleType(destProp.PropertyType))
                 continue;
-
+ 
             var sourceValue = sourceProp.GetValue(source);
-
+ 
             if (sourceValue == null)
                 continue;
-
+ 
             // Auto-map nested collection properties (e.g. List<Order> -> List<OrderDto>).
             if (IsCollectionType(sourceProp.PropertyType) && IsCollectionType(destProp.PropertyType))
             {
@@ -192,36 +202,59 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
                 }
                 continue;
             }
-
+ 
             var mapping = GetMapping(sourceProp.PropertyType, destProp.PropertyType);
-
+ 
             if (mapping != null)
             {
                 var mappedValue = MapThroughPipeline(sourceValue, sourceProp.PropertyType, destProp.PropertyType, mapping, context);
                 destProp.SetValue(result, mappedValue);
             }
         }
-
-        return result!;
     }
-
+ 
+    /// <summary>
+    /// Maps <paramref name="source"/> onto an existing <paramref name="destination"/> instance in
+    /// place — the compiled-assignment counterpart of <see cref="Map(object, MappingContext)"/>,
+    /// which allocates a new instance via <see cref="BuildExpression"/>. Nested object/collection
+    /// properties are still freshly allocated by <see cref="ApplyNestedMappings"/>; only the
+    /// top-level destination instance is reused.
+    /// </summary>
+    internal TDestination MapInto(TSource source, TDestination destination, MappingContext context)
+    {
+        if (context.ObjectCache.TryGetValue(source!, out var cached))
+            return (TDestination)cached;
+ 
+        context.ObjectCache[source!] = destination!;
+ 
+        var assign = _compiledAssign ??= BuildAssignExpression();
+        assign(source, destination);
+ 
+        ApplyNestedMappings(source!, destination!, context);
+ 
+        return destination;
+    }
+ 
+    void IMappingDefinition.MapInto(object source, object destination, MappingContext context)
+        => MapInto((TSource)source, (TDestination)destination, context);
+ 
     public MappingExpression<TSource, TDestination> ForMember<TMember>(
     Expression<Func<TDestination, TMember>> dest,
     Action<MemberOptions<TSource>> config)
     {
         // ✅ Extract property name
         var member = dest.Body as MemberExpression;
-
+ 
         if (member == null && dest.Body is UnaryExpression unary)
         {
             member = unary.Operand as MemberExpression;
         }
-
+ 
         if (member == null)
             throw new InvalidOperationException("Invalid expression");
-
+ 
         var propName = member.Member.Name;
-
+ 
         // ✅ Get or create PropertyMap
         if (!_typeMap.PropertyMaps.TryGetValue(propName, out var propertyMap))
         {
@@ -229,47 +262,47 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
             {
                 DestinationProperty = propName
             };
-
+ 
             _typeMap.PropertyMaps[propName] = propertyMap;
         }
-
+ 
         // ✅ Apply configuration
         var options = new MemberOptions<TSource>(propertyMap);
-
+ 
         config(options);
-
+ 
         return this;
     }
-
+ 
     public MappingExpression<TDestination, TSource> ReverseMap()
     {
         var reverseKey = (_typeMap.DestinationType, _typeMap.SourceType);
-
+ 
         // ✅ Check if mapping already exists
         if (_typeMaps.TryGetValue(reverseKey, out var existing))
         {
             var existingExpression = new MappingExpression<TDestination, TSource>(existing, _typeMaps, _allMappings);
-
+ 
             if (!_allMappings.Any(m => m.CanHandle(_typeMap.DestinationType, _typeMap.SourceType)))
             {
                 _allMappings.Add(existingExpression);
             }
-
+ 
             return existingExpression;
         }
-
+ 
         // ✅ Create reverse TypeMap
         var reverseTypeMap = new TypeMap
         {
             SourceType = _typeMap.DestinationType,
             DestinationType = _typeMap.SourceType
         };
-
+ 
         // ✅ OPTIONAL: Copy simple property mappings
         foreach (var kvp in _typeMap.PropertyMaps)
         {
             var original = kvp.Value;
-
+ 
             // ⚠️ Only reverse simple mappings (not custom functions)
             if (!original.Ignore && original.CustomMapping == null)
             {
@@ -279,58 +312,88 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
                 };
             }
         }
-
+ 
         // ✅ Register reverse mapping
         _typeMaps[reverseKey] = reverseTypeMap;
-
+ 
         var reverseExpression = new MappingExpression<TDestination, TSource>(reverseTypeMap, _typeMaps, _allMappings);
         _allMappings.Add(reverseExpression);
-
+ 
         return reverseExpression;
     }
-
-    // ✅ Expression builder
-    private Func<TSource, TDestination> BuildExpression()
+ 
+    // The simple-member matching rule shared by BuildExpression (new-instance) and
+    // BuildAssignExpression (map-into-existing-instance): a writable destination property with a
+    // same-name source property of a "simple" (directly assignable) type.
+    private IEnumerable<(PropertyInfo DestProp, PropertyInfo SourceProp)> GetSimpleMemberPairs()
     {
-        var sourceParam = Expression.Parameter(typeof(TSource), "src");
-
-        var bindings = new List<MemberBinding>();
-
         foreach (var destProp in typeof(TDestination).GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (!destProp.CanWrite)
                 continue;
-
+ 
             var sourceProp = typeof(TSource).GetProperty(destProp.Name);
-
+ 
             if (sourceProp == null)
                 continue;
-
+ 
             if (!IsSimpleType(destProp.PropertyType))
                 continue;
-
-            var sourceExpr = Expression.Property(sourceParam, sourceProp);
-
-            bindings.Add(Expression.Bind(destProp, sourceExpr));
+ 
+            yield return (destProp, sourceProp);
         }
-
+    }
+ 
+    // ✅ Expression builder
+    private Func<TSource, TDestination> BuildExpression()
+    {
+        var sourceParam = Expression.Parameter(typeof(TSource), "src");
+ 
+        var bindings = GetSimpleMemberPairs()
+            .Select(p => (MemberBinding)Expression.Bind(p.DestProp, Expression.Property(sourceParam, p.SourceProp)))
+            .ToList();
+ 
         var body = Expression.MemberInit(
             Expression.New(typeof(TDestination)),
             bindings
         );
-
+ 
         var lambda = Expression.Lambda<Func<TSource, TDestination>>(body, sourceParam);
-
+ 
         return lambda.Compile();
     }
-
+ 
+    // Assign-based counterpart of BuildExpression: writes directly into an existing destination
+    // parameter instead of Expression.New/MemberInit, so Map(source, destination) can populate an
+    // instance the caller already owns.
+    private Action<TSource, TDestination> BuildAssignExpression()
+    {
+        var sourceParam = Expression.Parameter(typeof(TSource), "src");
+        var destParam = Expression.Parameter(typeof(TDestination), "dest");
+ 
+        var assignments = GetSimpleMemberPairs()
+            .Select(p => (Expression)Expression.Assign(
+                Expression.Property(destParam, p.DestProp),
+                Expression.Property(sourceParam, p.SourceProp)))
+            .ToList();
+ 
+        // Expression.Block requires at least one expression; guard the no-simple-members case.
+        if (assignments.Count == 0)
+            assignments.Add(Expression.Empty());
+ 
+        var body = Expression.Block(assignments);
+        var lambda = Expression.Lambda<Action<TSource, TDestination>>(body, sourceParam, destParam);
+ 
+        return lambda.Compile();
+    }
+ 
     // ✅ Helper
     private bool IsSimpleType(System.Type type)
     {
         // Treat Nullable<T> the same type as T(e.g. int?,DateTime?, Guid?) so nullable
         // value-type members are copied directly instead of being silently skipped.
         var t = Nullable.GetUnderlyingType(type) ?? type;
-
+ 
         return t.IsPrimitive
             || t.IsEnum
             || t == typeof(string)
@@ -338,25 +401,25 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
             || t == typeof(decimal)
             || t == typeof(Guid);
     }
-
+ 
     private IMappingDefinition? GetMapping(Type sourceType, Type destType)
     {
         var key = (sourceType, destType);
-
+ 
         if (_mappingCache.TryGetValue(key, out var mapping))
             return mapping;
-
+ 
         if (!_typeMaps.ContainsKey(key))
         {
             _mappingCache[key] = null;
             return null;
         }
-
+ 
         mapping = _allMappings.FirstOrDefault(m => m.CanHandle(sourceType, destType));
         _mappingCache[key] = mapping;
         return mapping;
     }
-
+ 
     // Route nested mapping through the mapper's full pipeline so the nested type's own
     // ConvertUsing / ForMember / Ignore / Condition / ignore-null settings are applied.
     // Fall back to the raw definition if the context has no TransitioMapper attached.
@@ -371,7 +434,7 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
         ? mapper.MapWithContext(source, sourceType, destType, context)
         : mapping.Map(source, context);
     }
-
+ 
     // Maps a nested collection property, reusing element type maps and the shared
     // mapping context (so cycle detection still applies). Returns null when no element
     // mapping is configured, leaving the destination property at its default.
@@ -379,30 +442,30 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
     {
         var srcItemType = GetCollectionItemType(sourceType);
         var destItemType = GetCollectionItemType(destType);
-
+ 
         if (srcItemType == null || destItemType == null)
             return null;
-
+ 
         var itemMapping = GetMapping(srcItemType, destItemType);
-
+ 
         if (itemMapping == null)
             return null;
-
+ 
         var listType = typeof(List<>).MakeGenericType(destItemType);
         var list = (System.Collections.IList)Activator.CreateInstance(listType)!;
-
+ 
         foreach (var item in (System.Collections.IEnumerable)sourceValue)
         {
             list.Add(item == null ? null : MapThroughPipeline(item, srcItemType, destItemType, itemMapping, context));
         }
-
+ 
         if (destType.IsArray)
         {
             var array = Array.CreateInstance(destItemType, list.Count);
             list.CopyTo(array, 0);
             return array;
         }
-
+ 
         if (destType.IsAssignableFrom(listType) || destType.IsInterface)
         {
             return list;
@@ -417,24 +480,25 @@ public class MappingExpression<TSource, TDestination> : IMappingDefinition
         }
         return list;
     }
-
+ 
     private static bool IsCollectionType(Type type)
     {
         return type != typeof(string)
         && typeof(System.Collections.IEnumerable).IsAssignableFrom(type);
     }
-
+ 
     private static Type? GetCollectionItemType(Type type)
     {
         if (type.IsArray)
             return type.GetElementType();
-
+ 
         if (type.IsGenericType)
             return type.GetGenericArguments().FirstOrDefault();
-
+ 
         var enumerableInterface = type.GetInterfaces()
             .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
-
+ 
         return enumerableInterface?.GetGenericArguments().FirstOrDefault();
     }
 }
+ 
