@@ -153,6 +153,19 @@ public static class AssertionExtensions
     /// <summary>Begins an assertion chain for a nullable <see cref="char"/>.</summary>
     public static ComparableAssertions<char> Should(this char? actualValue) => new(actualValue);
  
+    /// <summary>Begins an assertion chain for any other comparable value type.</summary>
+    /// <remarks>
+    /// The concrete overloads above (<see cref="int"/>, <see cref="DateTime"/>, etc.) are more
+    /// specific and still win overload resolution for their exact types, so this generic fallback
+    /// only applies to custom structs - e.g. a <c>Money</c> value type implementing
+    /// <see cref="IComparable{T}"/> - that would otherwise fall through to the untyped
+    /// <see cref="Should(object?)"/> overload and lose ordering/range assertions.
+    /// </remarks>
+    public static ComparableAssertions<T> Should<T>(this T actualValue) where T : struct, IComparable<T> => new(actualValue);
+ 
+    /// <summary>Begins an assertion chain for a nullable instance of any other comparable value type.</summary>
+    public static ComparableAssertions<T> Should<T>(this T? actualValue) where T : struct, IComparable<T> => new(actualValue);
+ 
     /// <summary>Begins an assertion chain for a <see cref="Guid"/> (equality and nullability only).</summary>
     public static GuidAssertions Should(this Guid actualValue) => new(actualValue);
  

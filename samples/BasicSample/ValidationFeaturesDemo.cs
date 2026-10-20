@@ -46,6 +46,41 @@ public class StrictCustomerValidator : AbstractValidator<Customer>
     }
 }
  
+// A second model/validator covering the built-in validators Customer/StrictCustomer don't
+// exercise: Must, Equal/NotEqual, Length, MinimumLength, GreaterThan(OrEqual)/LessThan(OrEqual),
+// and WithErrorCode.
+public class OrderRequest
+{
+    public string? Sku { get; set; }
+    public string? Notes { get; set; }
+    public string Status { get; set; } = "";
+    public int Quantity { get; set; }
+    public decimal Price { get; set; }
+}
+ 
+public class OrderRequestValidator : AbstractValidator<OrderRequest>
+{
+    public OrderRequestValidator()
+    {
+        RuleFor(o => o.Sku).Length(3, 10).WithErrorCode("SKU_LENGTH");
+        RuleFor(o => o.Notes).MinimumLength(5);
+ 
+        RuleFor(o => o.Status).Equal("Pending");
+        RuleFor(o => o.Status).NotEqual("Cancelled");
+ 
+        RuleFor(o => o.Quantity).GreaterThan(0).LessThan(1000);
+        RuleFor(o => o.Quantity).Must(q => q % 2 == 0).WithMessage("Quantity must be even (sold in pairs)");
+ 
+        // Instance-aware Must((T, TProperty) => bool) - the predicate sees the whole object,
+        // not just the Quantity value, enabling a cross-field check.
+        RuleFor(o => o.Quantity)
+            .Must((order, qty) => qty * order.Price <= 100000m)
+            .WithMessage("Quantity * Price must not exceed 100000");
+ 
+        RuleFor(o => o.Price).GreaterThanOrEqual(0.01m).LessThanOrEqual(100000m);
+    }
+}
+ 
 public static class ValidationFeaturesDemo
 {
     public static void Run()
@@ -88,5 +123,70 @@ public static class ValidationFeaturesDemo
  
         var resolved = provider.GetRequiredService<IValidator<Customer>>();
         Console.WriteLine($"Resolved validator from DI -> valid passes: {resolved.Validate(valid).IsValid}");
+ 
+        // 6. Built-in validators not covered above: Must, Equal/NotEqual, Length, MinimumLength,
+        //    GreaterThan(OrEqual)/LessThan(OrEqual), and WithErrorCode.
+        var orderValidator = new OrderRequestValidator();
+ 
+        var validOrder = new OrderRequest { Sku = "SKU-123", Notes = "standard order", Status = "Pending", Quantity = 4, Price = 19.99m };
+        Console.WriteLine($"Valid order -> IsValid: {orderValidator.Validate(validOrder).IsValid}");
+ 
+        var invalidOrder = new OrderRequest { Sku = "AB", Notes = "hi", Status = "Cancelled", Quantity = 3, Price = 0m };
+        var orderResult = orderValidator.Validate(invalidOrder);
+        Console.WriteLine($"Invalid order -> IsValid: {orderResult.IsValid}, errors: {orderResult.Errors.Count}");
+        foreach (var failure in orderResult.Errors)
+            Console.WriteLine($"  - [{failure.ErrorCode}] {failure.PropertyName}: {failure.ErrorMessage}");
+ 
+        // 7. ServiceLifetime override: the default AddTransitioValidation(assembly) overload
+        //    registers validators as Singleton. Passing ServiceLifetime.Transient instead resolves
+        //    a brand-new instance every time, provable by comparing object references across two
+        //    resolutions from the same provider.
+        var singletonProvider = new ServiceCollection()
+            .AddTransitioValidation(typeof(CustomerValidator).Assembly)
+            .BuildServiceProvider();
+        var singletonA = singletonProvider.GetRequiredService<IValidator<Customer>>();
+        var singletonB = singletonProvider.GetRequiredService<IValidator<Customer>>();
+        Console.WriteLine($"Default (Singleton) lifetime -> same instance: {ReferenceEquals(singletonA, singletonB)}");
+ 
+        var transientProvider = new ServiceCollection()
+            .AddTransitioValidation(ServiceLifetime.Transient, typeof(CustomerValidator).Assembly)
+            .BuildServiceProvider();
+        var transientA = transientProvider.GetRequiredService<IValidator<Customer>>();
+        var transientB = transientProvider.GetRequiredService<IValidator<Customer>>();
+        Console.WriteLine($"ServiceLifetime.Transient override -> same instance: {ReferenceEquals(transientA, transientB)}");
+ 
+        // 8. Equal/NotEqual's optional IEqualityComparer<T>: without a comparer, default equality
+        //    is case-sensitive, so "Pending" fails Equal("PENDING"). With StringComparer
+        //    .OrdinalIgnoreCase, the same values compare equal.
+        var caseSensitive = new InlineValidator<OrderRequest>(v =>
+            v.Rule(o => o.Status).Equal("PENDING"));
+        var caseInsensitive = new InlineValidator<OrderRequest>(v =>
+            v.Rule(o => o.Status).Equal("PENDING", StringComparer.OrdinalIgnoreCase));
+ 
+        var pendingOrder = new OrderRequest { Status = "Pending" };
+        Console.WriteLine($"Equal(\"PENDING\") default comparer -> IsValid: {caseSensitive.Validate(pendingOrder).IsValid}");
+        Console.WriteLine($"Equal(\"PENDING\", OrdinalIgnoreCase) -> IsValid: {caseInsensitive.Validate(pendingOrder).IsValid}");
+ 
+        // 9. Value-based validators treat null as a skip, so they compose cleanly with NotNull()
+        //    instead of producing duplicate failures for the same null value.
+        var skipsNull = new InlineValidator<OrderRequest>(v =>
+            v.Rule(o => o.Notes).MinimumLength(5));
+        var composedWithNotNull = new InlineValidator<OrderRequest>(v =>
+            v.Rule(o => o.Notes).NotNull().MinimumLength(5));
+ 
+        var nullNotesOrder = new OrderRequest { Notes = null };
+        Console.WriteLine($"MinimumLength(5) alone on null Notes -> IsValid (null is skipped): {skipsNull.Validate(nullNotesOrder).IsValid}");
+        var composedResult = composedWithNotNull.Validate(nullNotesOrder);
+        Console.WriteLine($"NotNull().MinimumLength(5) on null Notes -> IsValid: {composedResult.IsValid}, errors: {composedResult.Errors.Count}");
     }
+}
+ 
+// A minimal AbstractValidator<T> wrapper for one-off rules that don't warrant a dedicated named
+// validator class, used by the Equal-comparer and null-skip demos above. RuleFor itself is
+// protected (validators call it from their own constructor), so Rule(...) is a public forwarder.
+public sealed class InlineValidator<T> : AbstractValidator<T>
+{
+    public InlineValidator(Action<InlineValidator<T>> configure) => configure(this);
+    public IRuleBuilder<T, TProperty> Rule<TProperty>(System.Linq.Expressions.Expression<Func<T, TProperty>> expression)
+        => RuleFor(expression);
 }

@@ -1,5 +1,5 @@
 name: Publish NuGet Packages
-
+ 
 on:
   push:
     tags:
@@ -10,49 +10,49 @@ on:
         description: "Publish to NuGet?"
         required: true
         default: "false"
-
+ 
 permissions:
   contents: write
-
+ 
 jobs:
   build-pack-publish:
     runs-on: ubuntu-latest
-
+ 
     steps:
       # ✅ Checkout
       - uses: actions/checkout@v4
-
+ 
       # ✅ Setup .NET
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             8.0.x
             10.0.x
-
+ 
       # ✅ Restore
       - run: dotnet restore
-
+ 
       # ✅ Build
       - run: dotnet build --configuration Release --no-restore
-
+ 
       # ✅ ✅ Security Scan (FIRST)
       - name: Security Scan
         run: dotnet list package --vulnerable --include-transitive
-
+ 
       # ✅ ✅ Unit Tests (SECOND)
       - name: Run Unit Tests
         run: dotnet test --configuration Release --no-build
-
+ 
       # ✅ Extract version (SIMPLE ✅)
       - name: Extract Version
         id: version_step
         run: |
           TAG=${GITHUB_REF#refs/tags/}
           VERSION=${TAG#v}
-
+ 
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
+ 
       # ✅ Pack
       - name: Pack
         run: |
@@ -60,7 +60,7 @@ jobs:
             -p:PackageVersion=${{ steps.version_step.outputs.version }} \
             -p:Version=${{ steps.version_step.outputs.version }} \
             -o ./nupkgs
-
+ 
       # ✅ Publish Mapper
       - name: Publish Mapper
         if: ${{ github.event_name == 'push' || github.event.inputs.publish == 'true' }}
@@ -69,7 +69,7 @@ jobs:
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-
+ 
       # ✅ Publish Dependency
       - name: Publish Dependency
         if: ${{ github.event_name == 'push' || github.event.inputs.publish == 'true' }}
@@ -79,7 +79,7 @@ jobs:
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-      
+     
       # ✅ Publish Validation
       - name: Publish Validation
         if: ${{ github.event_name == 'push' || github.event.inputs.publish == 'true' }}
@@ -89,7 +89,7 @@ jobs:
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-
+ 
       # ✅ Publish Mediator
       - name: Publish Mediator
         if: ${{ github.event_name == 'push' || github.event.inputs.publish == 'true' }}
@@ -99,7 +99,7 @@ jobs:
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-
+ 
       # ✅ Publish Assertions
       - name: Publish Assertions
         if: ${{ github.event_name == 'push' || github.event.inputs.publish == 'true' }}
@@ -109,7 +109,17 @@ jobs:
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-
+ 
+      # ✅ Publish Logging
+      - name: Publish Logging
+        if: ${{ github.event_name == 'push' || github.event.inputs.publish == 'true' }}
+        run: |
+          sleep 30
+          dotnet nuget push ./nupkgs/Transitio.Logging*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+ 
       # ✅ GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

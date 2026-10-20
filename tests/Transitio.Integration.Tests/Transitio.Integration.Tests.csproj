@@ -11,6 +11,7 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="xunit" Version="2.5.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
@@ -26,6 +27,7 @@
     <ProjectReference Include="..\..\src\Transitio.Validation\Transitio.Validation.csproj" />
     <ProjectReference Include="..\..\src\Transitio.Mediator\Transitio.Mediator.csproj" />
     <ProjectReference Include="..\..\src\Transitio.Assertions\Transitio.Assertions.csproj" />
+    <ProjectReference Include="..\..\src\Transitio.Logging\Transitio.Logging.csproj" />
   </ItemGroup>
  
 </Project>

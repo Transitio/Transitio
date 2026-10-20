@@ -27,9 +27,8 @@ public static class MapperFeaturesDemo
         // --------------------------------------------
         services.AddTransitio(cfg =>
         {
-            // Profiles
-            cfg.AddProfile<UserProfile>();
-            cfg.AddProfile<OrderProfile>();
+            // Profiles - AddProfiles(...) registers several profile instances in one call.
+            cfg.AddProfiles(new UserProfile(), new OrderProfile());
  
             // ConvertUsing examples
             cfg.AddProfile<TypeConverterProfile>();
@@ -86,6 +85,9 @@ public static class MapperFeaturesDemo
         //Nested collection + DI converter
         RunNestedCollectionDemo(mapper);
         RunDiConverterDemo(mapper);
+        RunMappingContextDemo(mapper);
+        RunMapIntoExistingInstanceWithConverterThrowsDemo(mapper);
+        RunAssertConfigurationIsValidDemo();
  
     }
  
@@ -274,13 +276,15 @@ public static class MapperFeaturesDemo
     {
         Console.WriteLine("=== Include: Override ===");
  
-        var employee = new Employee
+        // Supervisor/SupervisorDto - a hierarchy dedicated to this demo, not Employee/EmployeeDto,
+        // so the Name override below can't leak into the plain Include demos.
+        var supervisor = new Supervisor
         {
             Name = "Hitesh",
             Department = "Engineering"
         };
  
-        var dto = mapper.Map<EmployeeDto>(employee);
+        var dto = mapper.Map<SupervisorDto>(supervisor);
  
         Console.WriteLine($"Name: {dto.Name}"); // Should be overridden
         Console.WriteLine($"Department: {dto.Department}");
@@ -350,6 +354,93 @@ public static class MapperFeaturesDemo
  
         Console.WriteLine($"Final Amount: {result.FinalAmount}");
         Console.WriteLine($"Region: {result.Region}");
+        Console.WriteLine();
+    }
+ 
+    // IMappingContext: ctx.Items (per-operation scratch data shared across one Map() call's whole
+    // object graph) and ctx.Mapper (recursive/nested mapping from inside a converter) - both
+    // configured on Profiles/DelegateConverterProfile.cs.
+    static void RunMappingContextDemo(IMapper mapper)
+    {
+        Console.WriteLine("=== IMappingContext: ctx.Items and ctx.Mapper ===");
+ 
+        var envelope = new Envelope { Order = new OrderInput { Amount = 500, Currency = "INR", Country = "IN" } };
+        var envelopeDto = mapper.Map<EnvelopeDomain>(envelope);
+        Console.WriteLine($"ctx.Items: Order.Region={envelopeDto.Order.Region}, ResolvedRegion (read back via ctx.Items)={envelopeDto.ResolvedRegion}");
+ 
+        var shipment = new ShipmentRequest { Order = new OrderInput { Amount = 750, Currency = "USD", Country = "US" }, Carrier = "FastShip" };
+        var shipmentDto = mapper.Map<ShipmentDomain>(shipment);
+        Console.WriteLine($"ctx.Mapper: Order mapped recursively -> Region={shipmentDto.Order.Region}, Carrier={shipmentDto.Carrier}");
+        Console.WriteLine();
+    }
+ 
+    // docs/mapping-features.md "Mapping into an existing instance": Map(source, destination) does
+    // not support a ConvertUsing converter configured for that type pair - it throws instead of
+    // silently falling back to the create-new path.
+    static void RunMapIntoExistingInstanceWithConverterThrowsDemo(IMapper mapper)
+    {
+        Console.WriteLine("=== Map(source, destination) + ConvertUsing -> throws ===");
+ 
+        var input = new OrderInput { Amount = 100, Currency = "INR", Country = "IN" };
+        var tracked = new OrderDomain_Delegate { Region = "" };
+ 
+        try
+        {
+            mapper.Map(input, tracked);
+            Console.WriteLine("- (unexpected) Map(source, destination) succeeded");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"- caught as documented: {ex.Message}");
+        }
+        Console.WriteLine();
+    }
+ 
+    // Standalone AssertConfigurationIsValid() - validates a TransitioMapperConfiguration directly,
+    // without going through DI's ValidateConfiguration() opt-in (demonstrated in DependencyFeaturesDemo).
+    static void RunAssertConfigurationIsValidDemo()
+    {
+        Console.WriteLine("=== AssertConfigurationIsValid (standalone) ===");
+ 
+        var config = new TransitioMapperConfiguration(cfg => cfg.CreateMap<User, UserDto>());
+ 
+        try
+        {
+            config.AssertConfigurationIsValid();
+            Console.WriteLine("- configuration is valid");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"- (unexpected) invalid: {ex.Message}");
+        }
+        Console.WriteLine();
+ 
+        RunValidateConfigurationOptInDemo();
+    }
+ 
+    // The standalone equivalent of cfg.ValidateConfiguration() (demonstrated via DI's AddTransitio
+    // in DependencyFeaturesDemo.RunValidationDemo): calling cfg.ValidateConfiguration() inside the
+    // configuration delegate makes TransitioMapperConfiguration's constructor itself call
+    // AssertConfigurationIsValid(), so an invalid map throws immediately at construction time -
+    // no separate manual AssertConfigurationIsValid() call needed afterward.
+    static void RunValidateConfigurationOptInDemo()
+    {
+        Console.WriteLine("=== ValidateConfiguration() opt-in (standalone, eager at construction) ===");
+ 
+        try
+        {
+            _ = new TransitioMapperConfiguration(cfg =>
+            {
+                cfg.ValidateConfiguration();
+                cfg.CreateMap<User, BrokenUserDto>(); // BrokenUserDto.Missing has no source
+            });
+ 
+            Console.WriteLine("- (unexpected) construction succeeded");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"- caught at construction time, no AssertConfigurationIsValid() call needed: {ex.Message.Split('\n')[0]}");
+        }
         Console.WriteLine();
     }
 }

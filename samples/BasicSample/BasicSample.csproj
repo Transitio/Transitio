@@ -1,16 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+ 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Transitio.Mapper\Transitio.Mapper.csproj" />
     <ProjectReference Include="..\..\src\Transitio.Dependency\Transitio.Dependency.csproj" />
     <ProjectReference Include="..\..\src\Transitio.Validation\Transitio.Validation.csproj" />
     <ProjectReference Include="..\..\src\Transitio.Mediator\Transitio.Mediator.csproj" />
+    <ProjectReference Include="..\..\src\Transitio.Logging\Transitio.Logging.csproj" />
+    <ProjectReference Include="..\..\src\Transitio.Assertions\Transitio.Assertions.csproj" />
   </ItemGroup>
-
+ 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.8" />
   </ItemGroup>
-
+ 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
@@ -18,5 +22,5 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-
+ 
 </Project>

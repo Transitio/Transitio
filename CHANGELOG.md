@@ -5,6 +5,47 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),  
 and this project adheres to [Semantic Versioning](Semantic Versioning 2.0.0).
  
+## [Unreleased]
+ 
+### Added
+- **`Transitio.Assertions`** — a generic `Should<T>() where T : struct, IComparable<T>` fallback
+  overload, so any custom comparable struct (not just the built-in `DateTime`/`DateTimeOffset`/
+  `TimeSpan`/`char`) gets ordering/range assertions, matching what `docs/assertions.md` already
+  documented but the source didn't yet implement.
+- `Transitio.Assertions` is now demonstrated end-to-end in `samples/BasicSample` for the first
+  time, via a new `AssertionsFeaturesDemo`.
+ 
+### Known limitations
+- **`Transitio.Mediator`** — `IMediator`'s request-handler wrapper cache is keyed by request type
+  only, not by `(request type, response type)`. Calling `Send<TResponse>` for the same request type
+  with two different `TResponse` values (e.g. after widening via `IRequest<out TResponse>`
+  covariance) can hit a stale cached wrapper and throw an unrelated `InvalidCastException` instead
+  of the intended "no handler registered" error.
+- **`Transitio.Mediator`** — manually registering a pipeline behavior that is generic in only one
+  type parameter (e.g. fixed to a specific response type) via
+  `services.AddTransient(typeof(IPipelineBehavior<,>), typeof(SomeBehavior<>))` throws at startup
+  (`ArgumentException: Arity of open generic service type ... does not equal arity of open generic
+  implementation type`) — the .NET DI container requires matching arity between the open service
+  and implementation types. Register per closed request type instead: see
+  [Pipeline behaviors](docs/mediator.md#pipeline-behaviors).
+ 
+## [1.4.0] - 2026-10-16
+ 
+### Added
+- **`Transitio.Logging`** — a new standalone package that adds structured, correlation-aware
+  context on top of `Microsoft.Extensions.Logging`, without introducing a new logging
+  backend/sink system. `CorrelationContext.BeginScope`/`logger.BeginCorrelationScope` flow a
+  correlation id across async boundaries via `AsyncLocal`, `logger.BeginScope(("Key", value), ...)`
+  attaches structured properties to every log entry for the scope's duration, and
+  `logger.TimeOperation(...)` logs elapsed time on dispose using a structured message template.
+  It depends only on `Microsoft.Extensions.Logging.Abstractions` and
+  `Microsoft.Extensions.DependencyInjection.Abstractions` (for `AddTransitioLogging`) — never on
+  Transitio.Mapper/Validation/Mediator/Dependency, matching every other package's "standalone,
+  install what you need" design. Integration with those packages is documented as copy-paste
+  recipes in `docs/logging.md` and demonstrated end-to-end in `samples/BasicSample` and
+  `tests/Transitio.Integration.Tests`.
+- Documentation: `docs/logging.md`, plus a `LoggingFeaturesDemo` in `samples/BasicSample`.
+ 
 ## [1.3.0] - 2026-09-12
  
 ### Added
@@ -128,7 +169,8 @@ and this project adheres to [Semantic Versioning](Semantic Versioning 2.0.0).
 ### Added
 - Initial release of the Transitio mapping framework: `CreateMap`, profiles, name-based member mapping, nested object mapping, and `Microsoft.Extensions.DependencyInjection` integration via `Transitio.Dependency`.
  
-[1.3.0]: Comparing v1.2.0...HEAD · Transitio/Transitio
+[1.4.0]: Comparing v1.3.0...HEAD · Transitio/Transitio
+[1.3.0]: Comparing v1.2.0...v1.3.0 · Transitio/Transitio
 [1.2.0]: Comparing v1.1.0...v1.2.0 · Transitio/Transitio
 [1.1.0]: Comparing v1.0.8...v1.1.0 · Transitio/Transitio
 [1.0.8]: Comparing v1.0.7...v1.0.8 · Transitio/Transitio  
