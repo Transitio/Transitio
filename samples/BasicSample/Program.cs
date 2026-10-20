@@ -4,39 +4,39 @@ using BasicSample.DependencyFeatures;
 using BasicSample.ValidationFeatures;
 using BasicSample.MediatorFeatures;
 using BasicSample.LoggingFeatures;
- 
+
 // Transitio.Assertions features: fluent Should() chains for objects, booleans, strings, numbers,
 // comparables (incl. a custom IComparable<T> struct), collections, dictionaries, Guid, and
 // exceptions (sync + async).
 AssertionsFeaturesDemo.Run();
- 
+
 Console.WriteLine();
- 
+
 // Core Transitio.Mapper features: profiles, ForMember, Condition, Ignore,
 // reverse mapping, IgnoreNullValues, ConvertUsing, Include/IncludeBase, and
 // nested collections.
 MapperFeaturesDemo.Run();
- 
+
 Console.WriteLine();
- 
+
 // Transitio.Dependency (DI-layer) features: assembly scanning, direct IMapper
 // injection, keyed mappers, scoped converters, and fail-fast validation.
 DependencyFeaturesDemo.Run();
- 
+
 Console.WriteLine();
- 
+
 // Transitio.Validation features: fluent rule declaration, Continue cascade,
 // ValidateAndThrow, and DI registration via AddTransitioValidation.
 ValidationFeaturesDemo.Run();
- 
+
 Console.WriteLine();
- 
+
 // Transitio.Mediator features: request/response, notifications with multiple
 // handlers, and pipeline behaviors, wired via AddTransitioMediator.
 await MediatorFeaturesDemo.RunAsync();
- 
+
 Console.WriteLine();
- 
+
 // Transitio.Logging features: correlation ids, structured scopes, operation timing, and the
 // Mediator LoggingBehavior recipe from docs/logging.md.
 await LoggingFeaturesDemo.RunAsync();

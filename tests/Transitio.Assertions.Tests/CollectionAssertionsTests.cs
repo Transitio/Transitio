@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Transitio.Assertions;
 
 namespace Transitio.Assertions.Tests;

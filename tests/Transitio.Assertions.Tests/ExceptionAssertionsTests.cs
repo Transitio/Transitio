@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Transitio.Assertions;
 
 namespace Transitio.Assertions.Tests;

@@ -1,6 +1,4 @@
 #nullable enable
-using System.Collections.Generic;
-using System.Linq;
 using Transitio.Mapper;
 using Xunit;
 
@@ -65,7 +63,7 @@ public class RecursiveMapperTests
         var config = new TransitioMapperConfiguration(cfg =>
         {
             cfg.CreateMap<Order, OrderDto>();
-            
+
             cfg.CreateMap<User, UserDto>()
                 .ForMember(d => d.Orders, opt => opt.MapFrom(
                     (s, ctx) => s.Orders?.Select(o => ctx.Mapper!.Map<OrderDto>(o)).ToList()
@@ -167,7 +165,7 @@ public class RecursiveMapperTests
         var config = new TransitioMapperConfiguration(cfg =>
         {
             cfg.CreateMap<Order, OrderDto>();
-            
+
             cfg.CreateMap<User, UserDto>()
                 .ForMember(d => d.Orders, opt => opt.MapFrom(
                     (s, ctx) => s.Orders != null ? s.Orders.Select(o => ctx.Mapper!.Map<OrderDto>(o)).ToList() : null
@@ -194,12 +192,12 @@ public class RecursiveMapperTests
         Assert.NotNull(userDto);
         Assert.NotNull(userDto.Orders);
         Assert.Equal(2, userDto.Orders.Count);
-        
+
         // Verify recursive mapping worked
         Assert.Equal(1, userDto.Orders[0].Id);
         Assert.Equal(150.00m, userDto.Orders[0].Amount);
         Assert.Equal("Premium", userDto.Orders[0].Description);
-        
+
         Assert.Equal(2, userDto.Orders[1].Id);
         Assert.Equal(75.00m, userDto.Orders[1].Amount);
         Assert.Equal("Standard", userDto.Orders[1].Description);

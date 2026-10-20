@@ -1,8 +1,7 @@
-using System;
 using Microsoft.Extensions.DependencyInjection;
- 
+
 namespace Transitio.Logging;
- 
+
 public static class LoggingServiceCollectionExtensions
 {
     /// <summary>
@@ -24,15 +23,15 @@ public static class LoggingServiceCollectionExtensions
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
- 
+
         var options = new TransitioLoggingOptions();
         configure?.Invoke(options);
- 
+
         if (options.CorrelationIdGenerator != null)
             CorrelationContext.IdGenerator = options.CorrelationIdGenerator;
- 
+
         services.AddSingleton(options);
- 
+
         return services;
     }
 }

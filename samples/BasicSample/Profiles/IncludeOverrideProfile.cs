@@ -1,5 +1,5 @@
 using Transitio.Mapper;
- 
+
 // Uses ContactPerson/Supervisor - NOT Person/Employee - because CreateMap dedups by type pair and
 // returns the SAME shared TypeMap for repeated calls. IncludeBasicProfile and
 // IncludeMultiLevelProfile both also map Person->PersonDto / Employee->EmployeeDto; if this
@@ -13,7 +13,7 @@ public class IncludeOverrideProfile : MappingProfile
         // Base mapping
         cfg.CreateMap<ContactPerson, ContactPersonDto>()
            .ForMember(d => d.Name, opt => opt.MapFrom(s => s.Name));
- 
+
         // Derived mapping overrides base
         cfg.CreateMap<Supervisor, SupervisorDto>()
            .IncludeBase<ContactPerson, ContactPersonDto>()

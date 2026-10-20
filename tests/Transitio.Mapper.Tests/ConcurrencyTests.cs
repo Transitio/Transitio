@@ -1,6 +1,5 @@
 #nullable enable
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
 using Transitio.Mapper;
 using Xunit;
 

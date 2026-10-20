@@ -1,8 +1,6 @@
-using System;
-using System.Threading;
- 
+
 namespace Transitio.Logging;
- 
+
 /// <summary>
 /// Ambient correlation-id flow across an async call chain, independent of DI. Backed by an
 /// <see cref="AsyncLocal{T}"/>, so the current value automatically flows to child <c>Task</c>s /
@@ -21,7 +19,7 @@ namespace Transitio.Logging;
 public static class CorrelationContext
 {
     private static readonly AsyncLocal<string?> _current = new();
- 
+
     /// <summary>
     /// Optional override for how a fresh correlation id is minted when <see cref="BeginScope"/> is
     /// called with no explicit id and none is already ambient. Set once at application startup —
@@ -31,10 +29,10 @@ public static class CorrelationContext
     /// Defaults to <see langword="null"/>, in which case <c>Guid.NewGuid().ToString("N")</c> is used.
     /// </summary>
     public static Func<string>? IdGenerator { get; set; }
- 
+
     /// <summary>The correlation id ambient in the current logical call context, if any.</summary>
     public static string? Current => _current.Value;
- 
+
     /// <summary>
     /// Begins a correlation scope, setting <see cref="Current"/> for the duration of the returned
     /// <see cref="IDisposable"/>'s lifetime and restoring the previous ambient value (including
@@ -55,14 +53,14 @@ public static class CorrelationContext
         _current.Value = id;
         return new RestoreScope(previous);
     }
- 
+
     private sealed class RestoreScope : IDisposable
     {
         private readonly string? _previous;
         private bool _disposed;
- 
+
         public RestoreScope(string? previous) => _previous = previous;
- 
+
         public void Dispose()
         {
             if (_disposed)

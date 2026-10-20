@@ -1,7 +1,6 @@
-using System;
- 
+
 namespace Transitio.Logging;
- 
+
 /// <summary>
 /// Application-startup-time configuration for Transitio.Logging, applied via
 /// <c>AddTransitioLogging</c>.

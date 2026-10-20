@@ -5,9 +5,9 @@ using Transitio.Mapper;
 using Transitio.Mediator;
 using Transitio.Validation;
 using Xunit;
- 
+
 namespace Transitio.Integration.Tests;
- 
+
 // Records the CorrelationContext.Current value observed inside the Mediator pipeline, proving a
 // correlation id set by the caller's BeginCorrelationScope flows, via AsyncLocal, through the full
 // Mediator pipeline (validation behavior, handler, mapper) and back out. The observations
@@ -19,41 +19,41 @@ public sealed class CorrelationRecordingBehavior<TRequest, TResponse> : IPipelin
     where TRequest : IRequest<TResponse>
 {
     private readonly CorrelationObservations? _observations;
- 
+
     public CorrelationRecordingBehavior(CorrelationObservations? observations = null)
         => _observations = observations;
- 
+
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         if (_observations != null)
             _observations.SeenInBehavior = CorrelationContext.Current;
- 
+
         return await next();
     }
 }
- 
+
 public sealed class CorrelationObservations
 {
     public string? SeenInBehavior;
 }
- 
+
 public class CorrelationLoggingPipelineTests
 {
     [Fact]
     public async Task CorrelationId_FlowsThrough_ValidationAndHandler_ViaAsyncLocal()
     {
         var observations = new CorrelationObservations();
- 
+
         var services = new ServiceCollection();
         services.AddSingleton(observations);
         services.AddSingleton<OrderProcessingTracker>();
         services.AddTransitio(cfg => cfg.CreateMap<PlaceOrderRequest, OrderResult>());
         services.AddTransitioValidation(typeof(PlaceOrderValidator).Assembly);
         services.AddTransitioMediator(typeof(PlaceOrderHandler).Assembly); // also discovers CorrelationRecordingBehavior<,> above
- 
+
         using var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
- 
+
         using (CorrelationContext.BeginScope("test-correlation-id"))
         {
             await mediator.Send(new PlaceOrderRequest
@@ -63,7 +63,7 @@ public class CorrelationLoggingPipelineTests
                 Amount = 10m,
             });
         }
- 
+
         Assert.Equal("test-correlation-id", observations.SeenInBehavior);
     }
 }
