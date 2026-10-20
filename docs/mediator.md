@@ -138,6 +138,18 @@ different lifetime than the rest of the scan:
 services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
 ```
  
+This open-to-open form only works for a behavior that's generic in **both** type parameters,
+matching the arity of `IPipelineBehavior<,>` itself. A behavior that's only partially generic (e.g.
+`StringResponseBehavior<TRequest> : IPipelineBehavior<TRequest, string>`) has different arity, so
+the same registration throws at startup (`ArgumentException: Arity of open generic service type
+... does not equal arity of open generic implementation type`) — the .NET DI container requires the
+service and implementation open generic types to match arity. Register it per closed request type
+instead:
+ 
+```csharp
+services.AddTransient<IPipelineBehavior<Greet, string>, StringResponseBehavior<Greet>>();
+```
+ 
 Open-generic `IRequestHandler<,>`/`INotificationHandler<>` implementations are not discovered by
 this scan — only pipeline behaviors.
  
@@ -146,5 +158,3 @@ this scan — only pipeline behaviors.
 The following are planned for a later release: streaming requests (`IStreamRequest` /
 `IAsyncEnumerable`), configurable notification publishing strategies (parallel / whenAll), and
 `RequestPreProcessor` / `RequestPostProcessor` hooks.
- 
- 

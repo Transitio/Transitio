@@ -4,16 +4,16 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Transitio.Mapper;
- 
+
 namespace Transitio.Dependency;
- 
+
 public static class TransitioServiceCollectionExtensions
 {
     public static IServiceCollection AddTransitio(
         this IServiceCollection services,
         Action<TransitioConfigBuilder> config)
         => services.AddTransitio(ServiceLifetime.Singleton, config, Array.Empty<Assembly>());
- 
+
     /// <summary>
     /// Registers Transitio and discovers all mapping profiles in the given assemblies.
     /// </summary>
@@ -21,7 +21,7 @@ public static class TransitioServiceCollectionExtensions
         this IServiceCollection services,
         params Assembly[] assemblies)
         => services.AddTransitio(ServiceLifetime.Singleton, _ => { }, assemblies);
- 
+
     /// <summary>
     /// Registers Transitio, applies the inline configuration, and then discovers all
     /// mapping profiles in the given assemblies.
@@ -31,7 +31,7 @@ public static class TransitioServiceCollectionExtensions
         Action<TransitioConfigBuilder> config,
         params Assembly[] assemblies)
         => services.AddTransitio(ServiceLifetime.Singleton, config, assemblies);
- 
+
     /// <summary>
     /// Registers Transitio with an explicit service lifetime, applies the inline
     /// configuration, and discovers all mapping profiles in the given assemblies.
@@ -52,7 +52,7 @@ public static class TransitioServiceCollectionExtensions
         params Assembly[] assemblies)
     {
         var mapperConfig = BuildConfiguration(config, assemblies);
- 
+
         // Build the mapper lazily so type-based converters can be resolved from the
         // container (allowing converters with constructor dependencies). The captured
         // provider matches the registration lifetime, so a scoped/transient mapper
@@ -61,20 +61,20 @@ public static class TransitioServiceCollectionExtensions
             typeof(IMapper),
             sp => mapperConfig.BuildMapper(type => ActivatorUtilities.CreateInstance(sp, type)),
             lifetime));
- 
+
         services.Add(new ServiceDescriptor(
             typeof(TransitioDependency),
             sp => new TransitioDependency(sp),
             lifetime));
- 
+
         return services;
     }
- 
+
     public static IServiceCollection TryAddTransitio(
         this IServiceCollection services,
         Action<TransitioConfigBuilder> config)
         => services.TryAddTransitio(ServiceLifetime.Singleton, config, Array.Empty<Assembly>());
- 
+
     /// <summary>
     /// Like <see cref="AddTransitio(IServiceCollection, Assembly[])"/>, but only registers if
     /// <see cref="IMapper"/> is not already registered. See the lifetime overload for the exact
@@ -84,7 +84,7 @@ public static class TransitioServiceCollectionExtensions
         this IServiceCollection services,
         params Assembly[] assemblies)
         => services.TryAddTransitio(ServiceLifetime.Singleton, _ => { }, assemblies);
- 
+
     /// <summary>
     /// Like <see cref="AddTransitio(IServiceCollection, Action{TransitioConfigBuilder}, Assembly[])"/>,
     /// but only registers if <see cref="IMapper"/> is not already registered. See the lifetime
@@ -95,7 +95,7 @@ public static class TransitioServiceCollectionExtensions
         Action<TransitioConfigBuilder> config,
         params Assembly[] assemblies)
         => services.TryAddTransitio(ServiceLifetime.Singleton, config, assemblies);
- 
+
     /// <summary>
     /// Like <see cref="AddTransitio(IServiceCollection, ServiceLifetime, Action{TransitioConfigBuilder}, Assembly[])"/>,
     /// but registers <see cref="IMapper"/>/<see cref="TransitioDependency"/> only if no descriptor
@@ -118,22 +118,22 @@ public static class TransitioServiceCollectionExtensions
     {
         if (services.Any(d => d.ServiceType == typeof(IMapper)))
             return services;
- 
+
         var mapperConfig = BuildConfiguration(config, assemblies);
- 
+
         services.TryAdd(new ServiceDescriptor(
             typeof(IMapper),
             sp => mapperConfig.BuildMapper(type => ActivatorUtilities.CreateInstance(sp, type)),
             lifetime));
- 
+
         services.TryAdd(new ServiceDescriptor(
             typeof(TransitioDependency),
             sp => new TransitioDependency(sp),
             lifetime));
- 
+
         return services;
     }
- 
+
     /// <summary>
     /// Registers a keyed Transitio mapper and discovers all mapping profiles in the given
     /// assemblies.
@@ -143,7 +143,7 @@ public static class TransitioServiceCollectionExtensions
         object serviceKey,
         params Assembly[] assemblies)
         => services.AddKeyedTransitio(serviceKey, ServiceLifetime.Singleton, _ => { }, assemblies);
- 
+
     /// <summary>
     /// Registers a keyed Transitio mapper, applies the inline configuration, and discovers
     /// all mapping profiles in the given assemblies.
@@ -154,7 +154,7 @@ public static class TransitioServiceCollectionExtensions
         Action<TransitioConfigBuilder> config,
         params Assembly[] assemblies)
         => services.AddKeyedTransitio(serviceKey, ServiceLifetime.Singleton, config, assemblies);
- 
+
     /// <summary>
     /// Registers a keyed Transitio mapper with an explicit service lifetime. Multiple
     /// independent mapper configurations can be registered side by side under different
@@ -171,18 +171,18 @@ public static class TransitioServiceCollectionExtensions
     {
         if (serviceKey == null)
             throw new ArgumentNullException(nameof(serviceKey));
- 
+
         var mapperConfig = BuildConfiguration(config, assemblies);
- 
+
         services.Add(new ServiceDescriptor(
             typeof(IMapper),
             serviceKey,
             (sp, _) => mapperConfig.BuildMapper(type => ActivatorUtilities.CreateInstance(sp, type)),
             lifetime));
- 
+
         return services;
     }
- 
+
     /// <summary>
     /// Like <see cref="AddKeyedTransitio(IServiceCollection, object, Assembly[])"/>, but only
     /// registers if <see cref="IMapper"/> is not already registered under <paramref name="serviceKey"/>.
@@ -193,7 +193,7 @@ public static class TransitioServiceCollectionExtensions
         object serviceKey,
         params Assembly[] assemblies)
         => services.TryAddKeyedTransitio(serviceKey, ServiceLifetime.Singleton, _ => { }, assemblies);
- 
+
     /// <summary>
     /// Like <see cref="AddKeyedTransitio(IServiceCollection, object, Action{TransitioConfigBuilder}, Assembly[])"/>,
     /// but only registers if <see cref="IMapper"/> is not already registered under <paramref name="serviceKey"/>.
@@ -205,7 +205,7 @@ public static class TransitioServiceCollectionExtensions
         Action<TransitioConfigBuilder> config,
         params Assembly[] assemblies)
         => services.TryAddKeyedTransitio(serviceKey, ServiceLifetime.Singleton, config, assemblies);
- 
+
     /// <summary>
     /// Like <see cref="AddKeyedTransitio(IServiceCollection, object, ServiceLifetime, Action{TransitioConfigBuilder}, Assembly[])"/>,
     /// but registers <see cref="IMapper"/> only if no descriptor for the exact
@@ -223,21 +223,21 @@ public static class TransitioServiceCollectionExtensions
     {
         if (serviceKey == null)
             throw new ArgumentNullException(nameof(serviceKey));
- 
+
         if (services.Any(d => d.ServiceType == typeof(IMapper) && d.IsKeyedService && Equals(d.ServiceKey, serviceKey)))
             return services;
- 
+
         var mapperConfig = BuildConfiguration(config, assemblies);
- 
+
         services.TryAdd(new ServiceDescriptor(
             typeof(IMapper),
             serviceKey,
             (sp, _) => mapperConfig.BuildMapper(type => ActivatorUtilities.CreateInstance(sp, type)),
             lifetime));
- 
+
         return services;
     }
- 
+
     // Shared: builds the mapper configuration from inline config plus any assemblies to
     // scan for profiles. Validation (if opted in via cfg.ValidateConfiguration()) runs
     // here, after every map and scanned profile has been registered.
@@ -249,14 +249,13 @@ public static class TransitioServiceCollectionExtensions
             throw new ArgumentNullException(nameof(config));
         if (assemblies == null)
             throw new ArgumentNullException(nameof(assemblies));
- 
+
         return new TransitioMapperConfiguration(builder =>
         {
             config(builder);
- 
+
             if (assemblies.Length > 0)
                 builder.AddProfilesFromAssemblies(assemblies);
         });
     }
 }
- 

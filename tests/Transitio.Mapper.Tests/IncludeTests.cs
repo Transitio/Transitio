@@ -1,5 +1,4 @@
 #nullable enable
-using System;
 using Xunit;
 
 namespace Transitio.Mapper.Tests;

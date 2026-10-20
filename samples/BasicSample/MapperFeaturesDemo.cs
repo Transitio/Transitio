@@ -1,9 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Transitio.Dependency;
 using Transitio.Mapper;
- 
+
 namespace BasicSample.MapperFeatures;
- 
+
 // ================================================================================
 // Demos for the core Transitio.Mapper feature: profiles, ForMember, Condition,
 // Ignore, reverse mapping, IgnoreNullValues, ConvertUsing (type/instance/delegate/DI converters),
@@ -16,57 +16,56 @@ public static class MapperFeaturesDemo
         Console.WriteLine("## Transitio.Mapper feature demos ##");
         Console.WriteLine("######################################################");
         Console.WriteLine();
- 
+
         var services = new ServiceCollection();
- 
+
         //Service consumed by a DI-resolved type converter (see DiConverterProfile)
         services.AddSingleton<PricingService>();
- 
+
         // --------------------------------------------
         // ✅ Configure Transitio
         // --------------------------------------------
         services.AddTransitio(cfg =>
         {
-            // Profiles
-            cfg.AddProfile<UserProfile>();
-            cfg.AddProfile<OrderProfile>();
- 
+            // Profiles - AddProfiles(...) registers several profile instances in one call.
+            cfg.AddProfiles(new UserProfile(), new OrderProfile());
+
             // ConvertUsing examples
             cfg.AddProfile<TypeConverterProfile>();
             cfg.AddProfile<InstanceConverterProfile>();
             cfg.AddProfile<DelegateConverterProfile>();
             cfg.AddProfile<DiConverterProfile>();
- 
+
             // IncludeBase examples
             cfg.AddProfile<IncludeBasicProfile>();
             cfg.AddProfile<IncludeOverrideProfile>();
             cfg.AddProfile<IncludeMultiLevelProfile>();
- 
- 
+
+
             // Global settings
             cfg.SetIgnoreNullValues(true);
- 
+
             // Custom mappings
             cfg.CreateMap<User, UserViewDto>()
                .ForMember(dest => dest.DisplayName, opt => opt.MapFrom(src => src.Name.ToUpper()))
                .ForMember(dest => dest.Age, opt => opt.Condition(src => src.Age >= 18));
- 
+
             cfg.CreateMap<User, UserIgnoreDto>()
                .ForMember(dest => dest.Age, opt => opt.Ignore());
- 
+
             cfg.CreateMap<UserWithNullableName, UserWithDefaultNameDto>();
- 
+
             //Nested collection: Cart.Orders <List<Order>> auto maps to <List<OrderDto>>
             //and each Order's nested Customer is mapped too.
             cfg.CreateMap<Cart, CartDto>();
         });
- 
+
         // --------------------------------------------
         // ✅ Build Provider & Resolve Mapper
         // --------------------------------------------
         var provider = services.BuildServiceProvider();
         var mapper = provider.GetRequiredService<TransitioDependency>().Mapping.Mapper;
- 
+
         // --------------------------------------------
         // ✅ Run Demos
         // --------------------------------------------
@@ -86,14 +85,17 @@ public static class MapperFeaturesDemo
         //Nested collection + DI converter
         RunNestedCollectionDemo(mapper);
         RunDiConverterDemo(mapper);
- 
+        RunMappingContextDemo(mapper);
+        RunMapIntoExistingInstanceWithConverterThrowsDemo(mapper);
+        RunAssertConfigurationIsValidDemo();
+
     }
- 
- 
+
+
     // ============================================
     // ✅ Demo Methods
     // ============================================
- 
+
     static void RunOrderCollectionDemo(IMapper mapper)
     {
         var orders = new List<Order>
@@ -109,9 +111,9 @@ public static class MapperFeaturesDemo
             Customer = new User { Name = "John", Age = 17 }
         }
     };
- 
+
         Console.WriteLine("=== Order Collection Mapping ===");
- 
+
         // List
         var orderDtos = mapper.Map<List<OrderDto>>(orders);
         Console.WriteLine("Order -> List<OrderDto>:");
@@ -119,193 +121,195 @@ public static class MapperFeaturesDemo
         {
             Console.WriteLine($"- {dto.Id}: {dto.Customer.Name} ({dto.Customer.Age})");
         }
- 
+
         Console.WriteLine();
- 
+
         // Array
         var array = mapper.Map<OrderDto[]>(orders);
         Console.WriteLine("Order -> OrderDto[]:");
         Console.WriteLine($"- Length: {array.Length}");
         Console.WriteLine($"- First: {array[0].Id} -> {array[0].Customer.Name}");
- 
+
         Console.WriteLine();
- 
+
         // Interface
         var list = mapper.Map<IList<OrderDto>>(orders);
         Console.WriteLine("Order -> IList<OrderDto>:");
         Console.WriteLine($"- Count: {list.Count}");
         Console.WriteLine($"- Second: {list[1].Id} -> {list[1].Customer.Name}");
- 
+
         Console.WriteLine();
     }
- 
+
     static void RunUserMappingDemo(IMapper mapper)
     {
         Console.WriteLine("=== User Mapping (ForMember + Condition) ===");
- 
+
         var user = new User { Name = "Hitesh", Age = 16 };
         var result = mapper.Map<UserViewDto>(user);
- 
+
         Console.WriteLine($"- DisplayName: {result.DisplayName}");
         Console.WriteLine($"- Age: {result.Age}");
         Console.WriteLine();
- 
+
         Console.WriteLine("=== User Mapping (Ignore) ===");
- 
+
         var ignoreResult = mapper.Map<UserIgnoreDto>(
             new User { Name = "Alice", Age = 30 });
- 
+
         Console.WriteLine($"- Name: {ignoreResult.Name}");
         Console.WriteLine($"- Age: {ignoreResult.Age}");
         Console.WriteLine();
     }
- 
+
     static void RunReverseMappingDemo(IMapper mapper)
     {
         Console.WriteLine("=== Reverse Mapping ===");
- 
+
         var dto = new UserDto { Name = "Jane", Age = 22 };
         var user = mapper.Map<User>(dto);
- 
+
         Console.WriteLine($"- Name: {user.Name}");
         Console.WriteLine($"- Age: {user.Age}");
         Console.WriteLine();
     }
- 
+
     static void RunIgnoreNullDemo(IMapper mapper)
     {
         Console.WriteLine("=== IgnoreNullValues Demo ===");
- 
+
         var source = new UserWithNullableName { Name = null };
         var result = mapper.Map<UserWithDefaultNameDto>(source);
- 
+
         Console.WriteLine($"- Name: {result.Name}");
         Console.WriteLine();
     }
- 
- 
+
+
     static void RunMapIntoExistingInstanceDemo(IMapper mapper)
     {
         Console.WriteLine("=== Map(source, destination) - update an existing instance ===");
- 
+
         // Pretend this DTO is already tracked/allocated elsewhere (e.g. loaded from a cache).
         var tracked = new UserDto { Name = "Stale", Age = 0 };
- 
+
         var updated = mapper.Map(new User { Name = "Hitesh", Age = 31 }, tracked);
- 
+
         Console.WriteLine($"- Same reference: {ReferenceEquals(tracked, updated)}");
         Console.WriteLine($"- Name: {updated.Name}, Age: {updated.Age}");
         Console.WriteLine();
     }
- 
+
     static void RunTypeConverterDemo(IMapper mapper)
     {
         Console.WriteLine("=== Type Converter ===");
- 
+
         var input = new OrderInput
         {
             Amount = 1000,
             Currency = "INR",
             Country = "IN"
         };
- 
+
         var result = mapper.Map<OrderDomain_Type>(input);
- 
+
         Console.WriteLine($"Final Amount: {result.FinalAmount}");
         Console.WriteLine($"Region: {result.Region}");
         Console.WriteLine();
     }
- 
+
     static void RunInstanceConverterDemo(IMapper mapper)
     {
         Console.WriteLine("=== Instance Converter ===");
- 
+
         var input = new OrderInput
         {
             Amount = 1000,
             Currency = "INR",
             Country = "IN"
         };
- 
+
         var result = mapper.Map<OrderDomain_Instance>(input);
- 
+
         Console.WriteLine($"Final Amount: {result.FinalAmount}");
         Console.WriteLine($"Region: {result.Region}");
         Console.WriteLine();
     }
- 
+
     static void RunDelegateConverterDemo(IMapper mapper)
     {
         Console.WriteLine("=== Delegate Converter ===");
- 
+
         var input = new OrderInput
         {
             Amount = 1000,
             Currency = "INR",
             Country = "IN"
         };
- 
+
         var result = mapper.Map<OrderDomain_Delegate>(input);
- 
+
         Console.WriteLine($"Final Amount: {result.FinalAmount}");
         Console.WriteLine($"Region: {result.Region}");
         Console.WriteLine();
     }
- 
- 
+
+
     static void RunBasicInclude(IMapper mapper)
     {
         Console.WriteLine("=== Include: Basic ===");
- 
+
         var employee = new Employee
         {
             Name = "Hitesh",
             Department = "IT"
         };
- 
+
         var dto = mapper.Map<EmployeeDto>(employee);
- 
+
         Console.WriteLine($"Name: {dto.Name}");
         Console.WriteLine($"Department: {dto.Department}");
         Console.WriteLine();
     }
- 
+
     static void RunOverrideInclude(IMapper mapper)
     {
         Console.WriteLine("=== Include: Override ===");
- 
-        var employee = new Employee
+
+        // Supervisor/SupervisorDto - a hierarchy dedicated to this demo, not Employee/EmployeeDto,
+        // so the Name override below can't leak into the plain Include demos.
+        var supervisor = new Supervisor
         {
             Name = "Hitesh",
             Department = "Engineering"
         };
- 
-        var dto = mapper.Map<EmployeeDto>(employee);
- 
+
+        var dto = mapper.Map<SupervisorDto>(supervisor);
+
         Console.WriteLine($"Name: {dto.Name}"); // Should be overridden
         Console.WriteLine($"Department: {dto.Department}");
         Console.WriteLine();
     }
- 
+
     static void RunMultiLevelInclude(IMapper mapper)
     {
         Console.WriteLine("=== Include: Multi-Level ===");
- 
+
         var manager = new Manager
         {
             Name = "Hitesh",
             Department = "Architecture",
             TeamSize = 10
         };
- 
+
         var dto = mapper.Map<ManagerDto>(manager);
- 
+
         Console.WriteLine($"Name: {dto.Name}");
         Console.WriteLine($"Department: {dto.Department}");
         Console.WriteLine($"TeamSize: {dto.TeamSize}");
         Console.WriteLine();
     }
- 
+
     static void RunNestedCollectionDemo(IMapper mapper)
     {
         Console.WriteLine("=== Nested Collection (Cart -> CartDto) ===");
@@ -326,9 +330,9 @@ public static class MapperFeaturesDemo
             }
         }
         };
- 
+
         var dto = mapper.Map<CartDto>(cart);
- 
+
         Console.WriteLine($"Cart: {dto.Id} ({dto.Orders.Count} orders)");
         foreach (var o in dto.Orders)
         {
@@ -347,9 +351,96 @@ public static class MapperFeaturesDemo
         };
         // DiPricingConverter has a constructor dependency (Pricing Service) resolved by the container.
         var result = mapper.Map<OrderDomain_DI>(input);
- 
+
         Console.WriteLine($"Final Amount: {result.FinalAmount}");
         Console.WriteLine($"Region: {result.Region}");
+        Console.WriteLine();
+    }
+
+    // IMappingContext: ctx.Items (per-operation scratch data shared across one Map() call's whole
+    // object graph) and ctx.Mapper (recursive/nested mapping from inside a converter) - both
+    // configured on Profiles/DelegateConverterProfile.cs.
+    static void RunMappingContextDemo(IMapper mapper)
+    {
+        Console.WriteLine("=== IMappingContext: ctx.Items and ctx.Mapper ===");
+
+        var envelope = new Envelope { Order = new OrderInput { Amount = 500, Currency = "INR", Country = "IN" } };
+        var envelopeDto = mapper.Map<EnvelopeDomain>(envelope);
+        Console.WriteLine($"ctx.Items: Order.Region={envelopeDto.Order.Region}, ResolvedRegion (read back via ctx.Items)={envelopeDto.ResolvedRegion}");
+
+        var shipment = new ShipmentRequest { Order = new OrderInput { Amount = 750, Currency = "USD", Country = "US" }, Carrier = "FastShip" };
+        var shipmentDto = mapper.Map<ShipmentDomain>(shipment);
+        Console.WriteLine($"ctx.Mapper: Order mapped recursively -> Region={shipmentDto.Order.Region}, Carrier={shipmentDto.Carrier}");
+        Console.WriteLine();
+    }
+
+    // docs/mapping-features.md "Mapping into an existing instance": Map(source, destination) does
+    // not support a ConvertUsing converter configured for that type pair - it throws instead of
+    // silently falling back to the create-new path.
+    static void RunMapIntoExistingInstanceWithConverterThrowsDemo(IMapper mapper)
+    {
+        Console.WriteLine("=== Map(source, destination) + ConvertUsing -> throws ===");
+
+        var input = new OrderInput { Amount = 100, Currency = "INR", Country = "IN" };
+        var tracked = new OrderDomain_Delegate { Region = "" };
+
+        try
+        {
+            mapper.Map(input, tracked);
+            Console.WriteLine("- (unexpected) Map(source, destination) succeeded");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"- caught as documented: {ex.Message}");
+        }
+        Console.WriteLine();
+    }
+
+    // Standalone AssertConfigurationIsValid() - validates a TransitioMapperConfiguration directly,
+    // without going through DI's ValidateConfiguration() opt-in (demonstrated in DependencyFeaturesDemo).
+    static void RunAssertConfigurationIsValidDemo()
+    {
+        Console.WriteLine("=== AssertConfigurationIsValid (standalone) ===");
+
+        var config = new TransitioMapperConfiguration(cfg => cfg.CreateMap<User, UserDto>());
+
+        try
+        {
+            config.AssertConfigurationIsValid();
+            Console.WriteLine("- configuration is valid");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"- (unexpected) invalid: {ex.Message}");
+        }
+        Console.WriteLine();
+
+        RunValidateConfigurationOptInDemo();
+    }
+
+    // The standalone equivalent of cfg.ValidateConfiguration() (demonstrated via DI's AddTransitio
+    // in DependencyFeaturesDemo.RunValidationDemo): calling cfg.ValidateConfiguration() inside the
+    // configuration delegate makes TransitioMapperConfiguration's constructor itself call
+    // AssertConfigurationIsValid(), so an invalid map throws immediately at construction time -
+    // no separate manual AssertConfigurationIsValid() call needed afterward.
+    static void RunValidateConfigurationOptInDemo()
+    {
+        Console.WriteLine("=== ValidateConfiguration() opt-in (standalone, eager at construction) ===");
+
+        try
+        {
+            _ = new TransitioMapperConfiguration(cfg =>
+            {
+                cfg.ValidateConfiguration();
+                cfg.CreateMap<User, BrokenUserDto>(); // BrokenUserDto.Missing has no source
+            });
+
+            Console.WriteLine("- (unexpected) construction succeeded");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"- caught at construction time, no AssertConfigurationIsValid() call needed: {ex.Message.Split('\n')[0]}");
+        }
         Console.WriteLine();
     }
 }

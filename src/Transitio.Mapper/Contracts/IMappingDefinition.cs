@@ -1,12 +1,12 @@
 using System;
- 
+
 namespace Transitio.Mapper;
- 
+
 public interface IMappingDefinition
 {
     bool CanHandle(Type sourceType, Type destinationType);
     object Map(object source, MappingContext context);
- 
+
     /// <summary>
     /// Maps <paramref name="source"/> onto an existing <paramref name="destination"/> instance in
     /// place, instead of allocating a new one. The default implementation (kept so any
@@ -21,7 +21,7 @@ public interface IMappingDefinition
         var mapped = Map(source, context);
         if (mapped == null)
             return;
- 
+
         foreach (var prop in destination.GetType().GetProperties())
         {
             if (prop.CanRead && prop.CanWrite)

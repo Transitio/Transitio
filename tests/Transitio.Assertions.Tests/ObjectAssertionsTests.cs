@@ -1,4 +1,3 @@
-using System;
 using Transitio.Assertions;
 
 namespace Transitio.Assertions.Tests;

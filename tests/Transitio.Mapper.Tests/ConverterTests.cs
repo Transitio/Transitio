@@ -1,5 +1,4 @@
 #nullable enable
-using System;
 using Transitio.Mapper;
 using Xunit;
 
@@ -200,7 +199,7 @@ public class ConverterTests
         {
             cfg.CreateMap<User, UserDto>()
                 .ConvertUsing<UserConverter>();
-            
+
             cfg.CreateMap<Order, OrderDto>()
                 .ConvertUsing<OrderConverter>();
         });

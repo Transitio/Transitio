@@ -1,11 +1,11 @@
 ﻿using System;
- 
+
 namespace Transitio.Mapper;
- 
+
 public interface IMapper
 {
     TDestination Map<TDestination>(object source);
- 
+
     /// <summary>
     /// Maps <paramref name="source"/> onto the given <paramref name="destination"/> instance, in
     /// place, and returns it. The default implementation (kept so any <see cref="IMapper"/>
@@ -20,7 +20,7 @@ public interface IMapper
             throw new ArgumentNullException(nameof(source));
         if (destination == null)
             throw new ArgumentNullException(nameof(destination));
- 
+
         var mapped = Map<TDestination>(source);
         foreach (var prop in typeof(TDestination).GetProperties())
         {

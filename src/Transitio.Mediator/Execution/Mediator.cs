@@ -1,7 +1,4 @@
-using System;
 using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Transitio.Mediator;
 
@@ -14,6 +11,12 @@ internal sealed class Mediator : IMediator
 {
     private readonly IServiceProvider _serviceProvider;
 
+    // Known limitation: keyed by request type only, not (request type, TResponse). A request is
+    // normally sent with one consistent TResponse, but Send<TResponse> for the same request type
+    // with two different TResponse values (e.g. via IRequest<out TResponse> covariance) hits the
+    // wrapper cached for the first TResponse and throws InvalidCastException on the unchecked cast
+    // below, instead of the "no handler registered" InvalidOperationException a fresh call would
+    // produce. See CHANGELOG.md "Known limitations".
     private readonly ConcurrentDictionary<Type, object> _requestWrappers = new();
     private readonly ConcurrentDictionary<Type, NotificationHandlerWrapperBase> _notificationWrappers = new();
 

@@ -20,8 +20,8 @@ public class TransitioMapperConfiguration
         // Fail fast at build time when the caller opted in via VAlidateConfiguration().
         // Runs after the whole config delegate (including any assembly scanning) has
         // populated every map.
-        if(builder.ShouldValidateConfiguration)
-        AssertConfigurationIsValid();
+        if (builder.ShouldValidateConfiguration)
+            AssertConfigurationIsValid();
     }
 
     public IMapper BuildMapper()

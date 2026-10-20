@@ -1,4 +1,3 @@
-using System;
 using Transitio.Mapper;
 using Xunit;
 

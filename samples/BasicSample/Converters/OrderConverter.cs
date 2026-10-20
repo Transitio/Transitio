@@ -2,7 +2,7 @@ using Transitio.Mapper;
 
 public class OrderConverter
     : ITypeConverter<OrderInput, OrderDomain_Type>
-{  
+{
 
     public OrderDomain_Type Convert(OrderInput source, IMappingContext context)
     {

@@ -1,4 +1,3 @@
-using System;
 using Transitio.Assertions;
 
 namespace Transitio.Assertions.Tests;
@@ -91,5 +90,21 @@ public class ComparableAssertionsTests
 
         var when = new DateTimeOffset(2026, 7, 15, 0, 0, 0, TimeSpan.Zero);
         when.Should().BeGreaterThan(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+    }
+
+    private readonly struct Money : IComparable<Money>
+    {
+        public Money(decimal amount) => Amount = amount;
+        public decimal Amount { get; }
+        public int CompareTo(Money other) => Amount.CompareTo(other.Amount);
+    }
+
+    [Fact]
+    public void Works_For_Custom_IComparable_Struct()
+    {
+        // Should<T>() where T : struct, IComparable<T> is the generic fallback for custom
+        // comparable structs that have no dedicated overload (unlike int/DateTime/etc. above).
+        new Money(10m).Should().BeGreaterThan(new Money(5m)).And.BeInRange(new Money(0m), new Money(20m));
+        Assert.Throws<AssertionException>(() => new Money(1m).Should().BeGreaterThan(new Money(5m)));
     }
 }
