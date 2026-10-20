@@ -5,9 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),  
 and this project adheres to [Semantic Versioning](Semantic Versioning 2.0.0).
  
-## [Unreleased]
+## [1.4.0] - 2026-10-20
  
 ### Added
+- **`Transitio.Logging`** — a new standalone package that adds structured, correlation-aware
+  context on top of `Microsoft.Extensions.Logging`, without introducing a new logging
+  backend/sink system. `CorrelationContext.BeginScope`/`logger.BeginCorrelationScope` flow a
+  correlation id across async boundaries via `AsyncLocal`, `logger.BeginScope(("Key", value), ...)`
+  attaches structured properties to every log entry for the scope's duration, and
+  `logger.TimeOperation(...)` logs elapsed time on dispose using a structured message template.
+  It depends only on `Microsoft.Extensions.Logging.Abstractions` and
+  `Microsoft.Extensions.DependencyInjection.Abstractions` (for `AddTransitioLogging`) — never on
+  Transitio.Mapper/Validation/Mediator/Dependency, matching every other package's "standalone,
+  install what you need" design. Integration with those packages is documented as copy-paste
+  recipes in `docs/logging.md` and demonstrated end-to-end in `samples/BasicSample` and
+  `tests/Transitio.Integration.Tests`.
+- Documentation: `docs/logging.md`, plus a `LoggingFeaturesDemo` in `samples/BasicSample`.
 - **`Transitio.Assertions`** — a generic `Should<T>() where T : struct, IComparable<T>` fallback
   overload, so any custom comparable struct (not just the built-in `DateTime`/`DateTimeOffset`/
   `TimeSpan`/`char`) gets ordering/range assertions, matching what `docs/assertions.md` already
@@ -28,23 +41,6 @@ and this project adheres to [Semantic Versioning](Semantic Versioning 2.0.0).
   implementation type`) — the .NET DI container requires matching arity between the open service
   and implementation types. Register per closed request type instead: see
   [Pipeline behaviors](docs/mediator.md#pipeline-behaviors).
- 
-## [1.4.0] - 2026-10-16
- 
-### Added
-- **`Transitio.Logging`** — a new standalone package that adds structured, correlation-aware
-  context on top of `Microsoft.Extensions.Logging`, without introducing a new logging
-  backend/sink system. `CorrelationContext.BeginScope`/`logger.BeginCorrelationScope` flow a
-  correlation id across async boundaries via `AsyncLocal`, `logger.BeginScope(("Key", value), ...)`
-  attaches structured properties to every log entry for the scope's duration, and
-  `logger.TimeOperation(...)` logs elapsed time on dispose using a structured message template.
-  It depends only on `Microsoft.Extensions.Logging.Abstractions` and
-  `Microsoft.Extensions.DependencyInjection.Abstractions` (for `AddTransitioLogging`) — never on
-  Transitio.Mapper/Validation/Mediator/Dependency, matching every other package's "standalone,
-  install what you need" design. Integration with those packages is documented as copy-paste
-  recipes in `docs/logging.md` and demonstrated end-to-end in `samples/BasicSample` and
-  `tests/Transitio.Integration.Tests`.
-- Documentation: `docs/logging.md`, plus a `LoggingFeaturesDemo` in `samples/BasicSample`.
  
 ## [1.3.0] - 2026-09-12
  
@@ -169,7 +165,7 @@ and this project adheres to [Semantic Versioning](Semantic Versioning 2.0.0).
 ### Added
 - Initial release of the Transitio mapping framework: `CreateMap`, profiles, name-based member mapping, nested object mapping, and `Microsoft.Extensions.DependencyInjection` integration via `Transitio.Dependency`.
  
-[1.4.0]: Comparing v1.3.0...HEAD · Transitio/Transitio
+[1.4.0]: https://github.com/Transitio/Transitio/compare/v1.3.0...v1.4.0
 [1.3.0]: Comparing v1.2.0...v1.3.0 · Transitio/Transitio
 [1.2.0]: Comparing v1.1.0...v1.2.0 · Transitio/Transitio
 [1.1.0]: Comparing v1.0.8...v1.1.0 · Transitio/Transitio
